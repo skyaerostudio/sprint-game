@@ -267,6 +267,7 @@ body.screen { overflow: hidden; height: 100vh; }
 /* Fake It screen */
 .fk-stage { flex: 1; display: flex; flex-direction: column; gap: 1.4vw; min-height: 0; position: relative; }
 .fk-cards { --n: 5; display: flex; flex-wrap: nowrap; gap: 1.4vw; justify-content: center; align-items: center; flex: 1; padding-top: 2vw; }
+.fk-cards.multi { flex-wrap: wrap; align-content: center; row-gap: 1.6vw; }
 .fk-cards.many .fk-card .clue { font-size: 1.35vw; }
 .fk-cards.many .fk-card .nm { font-size: 1.45vw; }
 .fk-card { --tilt: -1.2deg; --s: 1; width: min(17vw, calc((94vw - (var(--n) - 1) * 1.4vw) / var(--n))); flex: none; background: #fff; border: .25vw solid var(--ink); box-shadow: .4vw .4vw 0 var(--ink); border-radius: .9vw; padding: 1.1vw; display: flex; flex-direction: column; align-items: center; gap: .7vw; position: relative; transform: rotate(var(--tilt)) scale(var(--s)); transition: transform .25s, opacity .25s, background-color .25s; }

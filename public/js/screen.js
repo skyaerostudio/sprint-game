@@ -388,8 +388,11 @@
     const key = JSON.stringify([f.phase, f.round, f.turnPid, f.clues && f.clues.length, f.votedIds, showImp, f.order.map((p) => p.online), tally, f.result && f.result.deltas]);
     if ($cards.dataset.key === key) return;
     $cards.dataset.key = key;
-    $cards.style.setProperty('--n', Math.max(5, f.order.length));
-    $cards.classList.toggle('many', f.order.length > 5);
+    const n = f.order.length;
+    const rows = n > 8 ? Math.ceil(n / 8) : 1;
+    $cards.style.setProperty('--n', Math.max(5, Math.ceil(n / rows)));
+    $cards.classList.toggle('many', n > 5);
+    $cards.classList.toggle('multi', rows > 1);
     $cards.innerHTML = f.order.map((p) => {
       const slot = (pass) => {
         const c = by[`${p.id}:${pass}`];

@@ -557,7 +557,6 @@ io.on('connection', (socket) => {
     const name = cleanName(d.name);
     if (!name) return err('Isi nama dulu dong!');
     if (Object.values(s.players).some((p) => p.name.toLowerCase() === name.toLowerCase())) return err('Nama itu sudah dipakai, pilih yang lain!');
-    if (Object.keys(s.players).length >= 30) return err('Sesi penuh.');
     const avatar = AVATARS.includes(d.avatar) ? d.avatar : pick(AVATARS);
     const pid = rid(10);
     const token = rid(24);
