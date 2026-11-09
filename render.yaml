@@ -1,0 +1,21 @@
+# Render Blueprint: New + > Blueprint, pick this repo.
+services:
+  - type: web
+    name: sprint-game
+    runtime: node
+    plan: free            # free = no disk and sleeps after ~15 min idle. Use "starter" + the disk below to keep sessions across redeploys.
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: HOST_PASSWORD
+        generateValue: true   # Render makes a random one. Read it in Dashboard > Environment.
+    # Persistent storage (paid plans only). Uncomment together with plan: starter and the DATA_DIR env var:
+    # disk:
+    #   name: sprint-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    # (add to envVars)  - key: DATA_DIR
+    #                     value: /var/data

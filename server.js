@@ -13,7 +13,8 @@ const { rid, pick } = require('./lib/util');
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOST_PASSWORD = process.env.HOST_PASSWORD || 'sprint';
-const PUBLIC_URL = (process.env.PUBLIC_URL || '').replace(/\/+$/, '');
+// Render sets RENDER_EXTERNAL_URL automatically, so the QR code works there without extra config.
+const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '');
 const BOOT = Date.now();
 const RESTART_GRACE_MS = 10000;
 
@@ -35,6 +36,7 @@ function lanIps() {
   return out;
 }
 
+app.get('/healthz', (req, res) => res.type('text/plain').send('ok'));
 app.get('/api/info', (req, res) => res.json({ publicUrl: PUBLIC_URL, lanIps: lanIps(), port: PORT }));
 app.get('/api/qr.svg', async (req, res) => {
   try {
