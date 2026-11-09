@@ -53,7 +53,7 @@
           showJoin(res && res.closed ? 'Sesi lamamu sudah ditutup. Join sesi baru ya!' : '');
         }
       });
-    } else if (!joined) {
+    } else if (!joined && curKey !== 'join') {
       showJoin();
     }
   });
@@ -93,7 +93,7 @@
         if (fx.to === me) {
           vibrate([120, 60, 120]);
           Sound.whoosh();
-          toast(fx.auto ? '💣 Bom nyasar ke kamu!' : `💣 Bom dari ${nameOf(fx.from)}!`);
+          toast(fx.auto ? 'Bom nyasar ke kamu!' : `Bom dari ${nameOf(fx.from)}!`);
         }
         break;
       case 'bomb:start':
@@ -123,12 +123,11 @@
     stopTick();
     let avatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
     $app.innerHTML = `
-      <div class="center" style="margin-top:8px">
-        <div class="emoji-xl">🎉</div>
-        <div class="big-msg">Sprint Games!</div>
-        <div class="muted mid-msg" style="font-size:17px">Bom Kentang Panas + Fake It Till You Make It</div>
+      <div style="margin-top:6px">
+        <div class="brand">Sprint<br><span>Games!</span></div>
+        <div class="muted" style="font-size:16px;font-weight:600;margin-top:14px">Bom Kentang Panas + Fake It Till You Make It</div>
       </div>
-      ${msg ? `<div class="panel center" style="color:#ffb3b3;font-weight:700">${esc(msg)}</div>` : ''}
+      ${msg ? `<div class="panel center err">${esc(msg)}</div>` : ''}
       <div class="panel stack">
         <div class="${urlCode ? 'hidden' : ''}">
           <label class="muted">Kode sesi (lihat di layar besar)</label>
@@ -143,7 +142,7 @@
           <div class="avatar-pick" id="avs">${AVATARS.map((a) => `<button type="button" data-a="${a}" class="${a === avatar ? 'sel' : ''}">${a}</button>`).join('')}</div>
         </div>
         <div id="jerr" class="err"></div>
-        <button class="btn primary big" id="go">Tap buat ikutan chaos! 🔥</button>
+        <button class="btn primary big" id="go">Tap buat ikutan chaos!</button>
       </div>`;
     const $name = $app.querySelector('#name');
     const prev = loadId();
@@ -215,14 +214,14 @@
       return {
         key: 'closed',
         build: (el) => {
-          el.innerHTML = `<div class="fill-center center"><div class="emoji-xl">🙏</div><div class="big-msg">Sesi udah ditutup</div><div class="mid-msg muted">Makasih udah main! Skor akhirmu: <b>${num(st.me.score)}</b></div><button class="btn ghost" id="newj">Join sesi baru</button></div>`;
+          el.innerHTML = `<div class="fill-center center"><div class="big-msg">Sesi udah ditutup</div><div class="mid-msg muted">Makasih udah main! Skor akhirmu: <b>${num(st.me.score)}</b></div><button class="btn ghost" id="newj">Join sesi baru</button></div>`;
           el.querySelector('#newj').onclick = () => { clearId(); joined = false; state = null; showJoin(); };
         },
       };
     }
-    if (st.final) return simple(`final-${st.me.rank}-${st.me.score}`, `<div class="fill-center center"><div class="emoji-xl">🏆</div><div class="big-msg">Lihat layar besar!</div><div class="mid-msg">Pengumuman juara lagi berlangsung… 🥁</div><div class="panel mid-msg">Peringkat kamu: <b>#${st.me.rank}</b><br>Skor: <b>${num(st.me.score)}</b></div></div>`);
+    if (st.final) return simple(`final-${st.me.rank}-${st.me.score}`, `<div class="fill-center center"><div class="big-msg">Lihat layar besar!</div><div class="mid-msg">Pengumuman juara lagi berlangsung… 🥁</div><div class="panel mid-msg">Peringkat kamu: <b>#${st.me.rank}</b><br>Skor: <b>${num(st.me.score)}</b></div></div>`);
     const busy = (st.bomb && st.bomb.phase === 'live') || (st.fake && ['role', 'clue', 'discuss', 'vote', 'reveal', 'lastchance'].includes(st.fake.phase));
-    if (st.overlay === 'leaderboard' && !busy) return simple(`lb-${st.me.rank}-${st.me.score}`, `<div class="fill-center center"><div class="emoji-xl">📊</div><div class="big-msg">Cek leaderboard di layar besar!</div><div class="panel mid-msg">Kamu peringkat <b>#${st.me.rank}</b> dengan <b>${num(st.me.score)}</b> poin</div></div>`);
+    if (st.overlay === 'leaderboard' && !busy) return simple(`lb-${st.me.rank}-${st.me.score}`, `<div class="fill-center center"><div class="big-msg">Cek leaderboard di layar besar!</div><div class="panel mid-msg">Kamu peringkat <b>#${st.me.rank}</b> dengan <b>${num(st.me.score)}</b> poin</div></div>`);
     if (st.activeGame === 'bomb' && st.bomb) return bombView(st);
     if (st.activeGame === 'fake' && st.fake) return fakeView(st);
     const others = st.players.filter((p) => p.id !== st.me.id);
@@ -264,9 +263,9 @@
       return simple(
         `bw-${b.round}-${b.holders.map((h) => h.id).join()}-${me.score}`,
         `<div class="fill-center center">
-          <div class="emoji-xl" style="animation:pulse .8s infinite">💣</div>
+          <div class="bomb-icon">💣</div>
           <div class="big-msg">${uniq.join(' & ')} lagi pegang bom!</div>
-          <div class="mid-msg muted">Ronde ${b.round}/${b.totalRounds}${b.mega ? ' · 💥 MEGA BOM' : ''}${b.double ? ' · 💣💣 BOM GANDA' : ''}</div>
+          <div class="mid-msg muted">Ronde ${b.round}/${b.totalRounds}${b.mega ? ' · MEGA BOM' : ''}${b.double ? ' · BOM GANDA' : ''}</div>
           <div class="panel mid-msg">Skor kamu: <b>${num(me.score)}</b><br><span class="muted" style="font-size:16px">Teriakin dia biar panik 📣</span></div>
         </div>`
       );
@@ -274,44 +273,44 @@
     if (b.phase === 'blast' && b.lastBlast) {
       const v = b.lastBlast.victims.find((x) => x.id === me.id);
       if (v) {
-        return simple(`bb-${b.round}-me`, `<div class="fill-center center"><div class="emoji-xl">💥</div><div class="big-msg">DUAR! Kamu meledak!</div><div class="big-msg" style="color:var(--bad)">${G.fmtScore(v.penalty)}</div><div class="mid-msg muted">Tenang, masih ada ronde berikutnya… mungkin 😅</div></div>`);
+        return simple(`bb-${b.round}-me`, `<div class="fill-center center"><div class="emoji-xl">💥</div><div class="big-msg">DUAR! Kamu meledak!</div><div class="big-msg neg-text">${G.fmtScore(v.penalty)}</div><div class="mid-msg muted">Tenang, masih ada ronde berikutnya… mungkin 😅</div></div>`);
       }
       return simple(`bb-${b.round}-${me.score}`, `<div class="fill-center center"><div class="emoji-xl">💥</div><div class="big-msg">${b.lastBlast.victims.map((x) => esc(x.name)).join(' & ')} meledak!</div><div class="mid-msg">Kamu selamat… untuk sekarang 😏</div><div class="panel mid-msg">Skor kamu: <b>${num(me.score)}</b></div></div>`);
     }
     if (b.phase === 'over') {
-      return simple(`bo-${me.score}`, `<div class="fill-center center"><div class="emoji-xl">🏁</div><div class="big-msg">Bom Kentang Panas selesai!</div><div class="panel mid-msg">Skor kamu: <b>${num(me.score)}</b><br>Peringkat #${me.rank}</div><div class="mid-msg muted">Lihat layar besar 👀</div></div>`);
+      return simple(`bo-${me.score}`, `<div class="fill-center center"><div class="big-msg">Bom Kentang Panas selesai!</div><div class="panel mid-msg">Skor kamu: <b>${num(me.score)}</b><br>Peringkat #${me.rank}</div><div class="mid-msg muted">Lihat layar besar 👀</div></div>`);
     }
     return simple(
       `bi-${b.round}`,
       `<div class="fill-center center">
-        <div class="emoji-xl">💣</div>
+        <div class="bomb-icon">💣</div>
         <div class="big-msg">Bom Kentang Panas</div>
         <div class="mid-msg">Ronde ${b.round + 1} sebentar lagi. Siap-siap!</div>
         <div class="panel" style="text-align:left;font-size:17px;line-height:1.5">
-          💣 Pegang bom? Selesaikan challenge, terus lempar!<br>
-          ✅ Tiap oper: <b>+${b.mega ? 20 : 10}</b><br>
-          💥 Meledak di tangan: <b>−${b.mega ? 200 : 100}</b><br>
-          🙅 Nggak boleh oper balik ke yang barusan ngelempar
+          Pegang bom? Selesaikan challenge, terus lempar!<br>
+          Tiap oper: <b>+${b.mega ? 20 : 10}</b><br>
+          Meledak di tangan: <b>−${b.mega ? 200 : 100}</b><br>
+          Nggak boleh oper balik ke yang barusan ngelempar
         </div>
       </div>`
     );
   }
 
   function buildHolder(el, st, bm, count, locked) {
-    const top = `${count > 1 ? '<div class="two-bombs">😱 Kamu pegang 2 BOM!!</div>' : ''}`;
+    const top = `${count > 1 ? '<div class="two-bombs">Kamu pegang 2 BOM!!</div>' : ''}`;
     if (locked) {
-      el.innerHTML = `${top}<div class="fill-center"><div class="bomb-icon">💣</div><div class="locked">🔒 Salah! Terkunci…<div class="num" data-ends="${bm.lockedUntil}">3</div></div></div>`;
+      el.innerHTML = `${top}<div class="fill-center"><div class="bomb-icon">💣</div><div class="locked">Salah! Terkunci…<div class="num" data-ends="${bm.lockedUntil}">3</div></div></div>`;
       return;
     }
     if (bm.solved) {
       const blocked = bm.blocked && !bm.targets.some((t) => t.id === bm.blocked.id) ? bm.blocked : null;
       el.innerHTML = `${top}
-        <div class="chal-title">✅ Mantap! Lempar ke siapa?</div>
+        <div class="chal-title">Mantap! Lempar ke siapa?</div>
         <div class="targets">
           ${bm.targets.map((t) => `<button class="btn" data-t="${t.id}"><span class="av">${t.avatar}</span>${esc(t.name)}</button>`).join('')}
-          ${blocked ? `<button class="btn blocked" disabled><span class="av">${blocked.avatar}</span>🚫 ${esc(blocked.name)}<small>baru ngoper ke kamu</small></button>` : ''}
+          ${blocked ? `<button class="btn blocked" disabled><span class="av">${blocked.avatar}</span>${esc(blocked.name)}<small>baru ngoper ke kamu</small></button>` : ''}
         </div>
-        <button class="btn warn big" data-t="random">🎲 Lempar Acak!</button>`;
+        <button class="btn warn big" data-t="random">Lempar Acak!</button>`;
       el.addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-t]');
         if (!btn || btn.disabled) return;
@@ -401,7 +400,7 @@
         break;
       }
       case 'geser': {
-        el.innerHTML = `<div class="slider-wrap"><div class="slider-zone-track"><div class="slider-zone" style="left:${c.zoneStart}%;width:${c.zoneWidth}%"></div></div><input type="range" class="defuse" min="0" max="100" step="0.5" value="0" id="sl" /></div><div class="mid-msg">Lepas jarinya pas di zona hijau ✂️</div>`;
+        el.innerHTML = `<div class="slider-wrap"><div class="slider-zone-track"><div class="slider-zone" style="left:${c.zoneStart}%;width:${c.zoneWidth}%"></div></div><input type="range" class="defuse" min="0" max="100" step="0.5" value="0" id="sl" /></div><div class="mid-msg">Lepas jarinya pas di zona hijau</div>`;
         const sl = el.querySelector('#sl');
         let moved = false;
         sl.addEventListener('input', () => { moved = true; });
@@ -413,7 +412,7 @@
         break;
       }
       case 'tahan': {
-        el.innerHTML = `<div class="hold-btn" id="hb">TAHAN</div><div class="mid-msg" id="hr">Hitung dalam hati… 🤫</div>`;
+        el.innerHTML = `<div class="hold-btn" id="hb">TAHAN</div><div class="mid-msg" id="hr">Hitung dalam hati…</div>`;
         const hb = el.querySelector('#hb');
         let t0 = 0;
         const down = (e) => { e.preventDefault(); if (t0) return; t0 = performance.now(); hb.classList.add('down'); };
@@ -454,9 +453,9 @@
 
   function peekHtml(card) {
     const body = card.role === 'impostor'
-      ? `<div>Kategori: ${esc(card.category)}</div><span class="w">🎭 Kamu PENIPU!</span><div style="font-size:17px;margin-top:6px">Jangan sampai ketahuan…</div>`
+      ? `<div>Kategori: ${esc(card.category)}</div><span class="w">Kamu PENIPU!</span><div style="font-size:17px;margin-top:6px">Jangan sampai ketahuan…</div>`
       : `<div>Kategori: ${esc(card.category)}</div><span class="w">${esc(card.word.toUpperCase())}</span><div style="font-size:17px;margin-top:6px">Kasih petunjuk yang nggak terlalu jelas!</div>`;
-    return `<div class="peek" id="peek"><div class="cover">👀 Tahan di sini buat lihat kartumu</div><div class="reveal">${body}</div></div>`;
+    return `<div class="peek" id="peek"><div class="cover">Tahan di sini buat lihat kartumu</div><div class="reveal">${body}</div></div>`;
   }
 
   function bindPeek(el) {
@@ -478,26 +477,26 @@
     if (f.phase === 'idle') {
       return simple('fi', `<div class="fill-center center"><div class="emoji-xl">🎭</div><div class="big-msg">Fake It Till You Make It</div>
         <div class="panel" style="text-align:left;font-size:17px;line-height:1.5">
-        🤫 Semua dapat kata rahasia yang sama, kecuali <b>si Penipu</b>.<br>
-        ✍️ Gantian kasih <b>satu kata</b> petunjuk.<br>
-        🗳️ Vote siapa penipunya!<br>
-        🎯 Nebak penipu bener: <b>+50</b> · Penipu lolos: <b>+150</b></div></div>`);
+        Semua dapat kata rahasia yang sama, kecuali <b>si Penipu</b>.<br>
+        Gantian kasih <b>satu kata</b> petunjuk.<br>
+        Vote siapa penipunya!<br>
+        Nebak penipu bener: <b>+50</b> · Penipu lolos: <b>+150</b></div></div>`);
     }
-    if (f.phase === 'cancelled') return simple(`fc-${f.cancelReason}`, `<div class="fill-center center"><div class="emoji-xl">🔁</div><div class="big-msg">Ronde dibatalkan</div><div class="mid-msg">${esc(f.cancelReason)}</div><div class="mid-msg muted">Ronde baru sebentar lagi…</div></div>`);
-    if (f.phase === 'over') return simple(`fo-${me.score}`, `<div class="fill-center center"><div class="emoji-xl">🏁</div><div class="big-msg">Fake It selesai!</div><div class="panel mid-msg">Skor kamu: <b>${num(me.score)}</b><br>Peringkat #${me.rank}</div></div>`);
+    if (f.phase === 'cancelled') return simple(`fc-${f.cancelReason}`, `<div class="fill-center center"><div class="big-msg">Ronde dibatalkan</div><div class="mid-msg">${esc(f.cancelReason)}</div><div class="mid-msg muted">Ronde baru sebentar lagi…</div></div>`);
+    if (f.phase === 'over') return simple(`fo-${me.score}`, `<div class="fill-center center"><div class="big-msg">Fake It selesai!</div><div class="panel mid-msg">Skor kamu: <b>${num(me.score)}</b><br>Peringkat #${me.rank}</div></div>`);
     if (f.phase === 'result') {
       const d = (f.result.deltas && f.result.deltas[me.id]) || 0;
       const imp = f.order.find((p) => p.id === f.impostor) || { name: '?', avatar: '❓' };
       return simple(`fr-${f.round}-${me.score}`, `<div class="fill-center center">
         <div class="emoji-xl">${f.impostor === me.id ? '🎭' : imp.avatar}</div>
         <div class="big-msg">${f.impostor === me.id ? 'Kamu penipunya!' : `Penipunya: ${esc(imp.name)}`}</div>
-        <div class="mid-msg">Kata rahasia: <b style="color:var(--warn)">${esc(f.word)}</b></div>
-        <div class="big-msg" style="color:${d > 0 ? 'var(--good)' : d < 0 ? 'var(--bad)' : 'var(--muted)'}">${d ? G.fmtScore(d) : '±0'}</div>
+        <div class="mid-msg">Kata rahasia: <b class="hl">${esc(f.word)}</b></div>
+        <div class="big-msg ${d > 0 ? 'pos-text' : d < 0 ? 'neg-text' : 'muted'}">${d ? G.fmtScore(d) : '±0'}</div>
         <div class="mid-msg muted">${f.result.captions.map(esc).join('<br>')}</div></div>`);
     }
     if (!ACTIVE.includes(f.phase)) return simple('fx-' + f.phase, '');
     if (!f.participant) {
-      return simple(`fnp-${f.round}`, `<div class="fill-center center"><div class="emoji-xl">🙌</div><div class="big-msg">Kamu baru join!</div><div class="mid-msg">Ikut ronde berikutnya ya. Sekarang nonton dulu 🍿</div></div>`);
+      return simple(`fnp-${f.round}`, `<div class="fill-center center"><div class="big-msg">Kamu baru join!</div><div class="mid-msg">Ikut ronde berikutnya ya. Sekarang nonton dulu 🍿</div></div>`);
     }
 
     // Shell: peek card stays mounted for the whole round; only the body re-renders.
@@ -519,7 +518,7 @@
     let html;
     let bind = null;
     const nameOf = (pid) => (f.order.find((p) => p.id === pid) || {}).name || '?';
-    const head = `<div class="muted center" style="font-weight:700">Ronde ${f.round}/${f.totalRounds} · Kategori: ${esc(f.category)}${f.double ? ' · 🔥 POIN DOBEL' : ''}</div>`;
+    const head = `<div class="muted center" style="font-weight:700">Ronde ${f.round}/${f.totalRounds} · Kategori: ${esc(f.category)}${f.double ? ' · POIN DOBEL' : ''}</div>`;
 
     if (f.myTurn && !prevMyTurn) { vibrate([150, 80, 150]); Sound.notify(); }
     prevMyTurn = !!f.myTurn;
@@ -527,16 +526,16 @@
     switch (f.phase) {
       case 'role':
         key = 'role';
-        html = `${head}<div class="fill-center center"><div class="emoji-xl">🤫</div><div class="big-msg">Cek kartumu diam-diam!</div><div class="mid-msg muted">Tahan kotak di atas. Jangan sampai diintip orang sebelah 👀</div><div class="timer-big" data-ends="${f.phaseEndsAt}"></div></div>`;
+        html = `${head}<div class="fill-center center"><div class="big-msg">Cek kartumu diam-diam!</div><div class="mid-msg muted">Tahan kotak di atas. Jangan sampai diintip orang sebelah 👀</div><div class="timer-big" data-ends="${f.phaseEndsAt}"></div></div>`;
         break;
       case 'clue':
         if (f.myTurn) {
           key = `myturn-${f.clues.length}`;
-          html = `${head}<div class="panel stack center"><div class="big-msg">✍️ Giliran KAMU!</div><div class="mid-msg">Putaran ${f.clueRound}/2 · Satu kata aja</div>
+          html = `${head}<div class="panel stack center"><div class="big-msg">Giliran KAMU!</div><div class="mid-msg">Putaran ${f.clueRound}/2 · Satu kata aja</div>
             <div class="timer-big" data-bind="turnEndsAt" data-ends="${f.turnEndsAt}"></div>
             <input id="clue" type="text" maxlength="20" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Petunjuk…" style="font-size:26px;text-align:center" />
             <div id="cerr" class="err"></div>
-            <button class="btn primary big" id="csend">Kirim 🚀</button></div>${clueListHtml(f)}`;
+            <button class="btn primary big" id="csend">Kirim</button></div>${clueListHtml(f)}`;
           bind = (el) => {
             const inp = el.querySelector('#clue');
             const btn = el.querySelector('#csend');
@@ -559,19 +558,19 @@
           };
         } else {
           key = `turn-${f.turnPid}-${f.clues.length}`;
-          html = `${head}<div class="panel center stack"><div class="mid-msg">Putaran ${f.clueRound}/2</div><div class="big-msg">Giliran ${esc(nameOf(f.turnPid))} ✍️</div><div class="timer-big" data-bind="turnEndsAt" data-ends="${f.turnEndsAt}"></div></div>${clueListHtml(f)}`;
+          html = `${head}<div class="panel center stack"><div class="mid-msg">Putaran ${f.clueRound}/2</div><div class="big-msg">Giliran ${esc(nameOf(f.turnPid))}</div><div class="timer-big" data-bind="turnEndsAt" data-ends="${f.turnEndsAt}"></div></div>${clueListHtml(f)}`;
         }
         break;
       case 'discuss':
         key = 'discuss';
-        html = `${head}<div class="panel center stack"><div class="big-msg">🗣️ Debat!</div><div class="mid-msg">Siapa yang mencurigakan? Ngomong langsung!</div><div class="timer-big" data-bind="phaseEndsAt" data-ends="${f.phaseEndsAt}"></div></div>${clueListHtml(f)}`;
+        html = `${head}<div class="panel center stack"><div class="big-msg">Debat!</div><div class="mid-msg">Siapa yang mencurigakan? Ngomong langsung!</div><div class="timer-big" data-bind="phaseEndsAt" data-ends="${f.phaseEndsAt}"></div></div>${clueListHtml(f)}`;
         break;
       case 'vote': {
         const opts = f.order.filter((p) => p.id !== st.me.id);
         key = `vote-${f.myVote}`;
-        html = `${head}<div class="center"><div class="big-msg">🗳️ Siapa penipunya?</div><div class="timer-big" data-bind="phaseEndsAt" data-ends="${f.phaseEndsAt}"></div></div>
+        html = `${head}<div class="center"><div class="big-msg">Siapa penipunya?</div><div class="timer-big" data-bind="phaseEndsAt" data-ends="${f.phaseEndsAt}"></div></div>
           <div class="vote-list">${opts.map((p) => `<button class="btn ${f.myVote === p.id ? 'sel' : ''}" data-v="${p.id}"><span class="av">${p.avatar}</span>${esc(p.name)}</button>`).join('')}</div>
-          <div class="mid-msg muted">${f.myVote ? `Vote kamu: <b>${esc(nameOf(f.myVote))}</b> ✅ (masih bisa ganti)` : 'Tap salah satu'}</div>${clueListHtml(f)}`;
+          <div class="mid-msg muted">${f.myVote ? `Vote kamu: <b>${esc(nameOf(f.myVote))}</b> (masih bisa ganti)` : 'Tap salah satu'}</div>${clueListHtml(f)}`;
         bind = (el) => el.addEventListener('click', (e) => {
           const b = e.target.closest('button[data-v]');
           if (!b) return;
@@ -581,15 +580,15 @@
       }
       case 'reveal':
         key = 'reveal';
-        html = `${head}<div class="fill-center center"><div class="emoji-xl">👀</div><div class="big-msg">Lihat layar besar!</div><div class="mid-msg">Vote lagi dibuka satu-satu… 🥁</div></div>`;
+        html = `${head}<div class="fill-center center"><div class="big-msg">Lihat layar besar!</div><div class="mid-msg">Vote lagi dibuka satu-satu… 🥁</div></div>`;
         break;
       case 'lastchance':
         if (f.amImpostorGuessing && !f.alreadyGuessed) {
           key = 'guess';
-          html = `<div class="panel stack center"><div class="big-msg">😱 Kamu ketahuan!</div><div class="mid-msg">Kesempatan terakhir: tebak kata rahasianya!</div>
+          html = `<div class="panel stack center"><div class="big-msg">Kamu ketahuan!</div><div class="mid-msg">Kesempatan terakhir: tebak kata rahasianya!</div>
             <div class="timer-big" data-bind="phaseEndsAt" data-ends="${f.phaseEndsAt}"></div>
             <input id="guess" type="text" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Kata rahasianya…" style="font-size:24px;text-align:center" />
-            <button class="btn primary big" id="gsend">Tebak! 🎯</button></div>${clueListHtml(f)}`;
+            <button class="btn primary big" id="gsend">Tebak!</button></div>${clueListHtml(f)}`;
           bind = (el) => {
             const inp = el.querySelector('#guess');
             const send = () => {
@@ -616,4 +615,7 @@
     }
     box.querySelectorAll('[data-bind]').forEach((el) => { el.dataset.ends = f[el.dataset.bind]; });
   }
+
+  // Show the join form right away on first visit, instead of a blank page until the socket connects.
+  if (!loadId()) showJoin();
 })();

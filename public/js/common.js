@@ -130,7 +130,7 @@
     const g = cv.getContext('2d');
     const resize = () => { cv.width = innerWidth; cv.height = innerHeight; };
     resize();
-    const colors = ['#ff5252', '#ffd740', '#69f0ae', '#40c4ff', '#e040fb', '#ff9100', '#fff'];
+    const colors = ['#e8402a', '#ffc83d', '#2fa36b', '#f26ca7', '#ff8a3d', '#fff4dc', '#1b1b1b'];
     const parts = Array.from({ length: 220 }, () => ({
       x: Math.random() * cv.width,
       y: -20 - Math.random() * cv.height * 0.6,
@@ -183,8 +183,19 @@
   const fmtScore = (n) => (n > 0 ? '+' : '') + Number(n).toLocaleString('id-ID');
   const num = (n) => Number(n).toLocaleString('id-ID');
 
+  // Pick ink or white text for whatever color the host chose, whichever has more contrast.
+  function lum(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return null;
+    const c = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
   function setTheme(color) {
-    if (color) document.documentElement.style.setProperty('--theme', color);
+    if (!color) return;
+    const root = document.documentElement.style;
+    root.setProperty('--theme', color);
+    const L = lum(color);
+    if (L != null) root.setProperty('--theme-ink', (L + 0.05) / (0.011 + 0.05) >= 1.05 / (L + 0.05) ? '#1b1b1b' : '#ffffff');
   }
 
   window.G = { esc, Clock, Sound, confetti, countUp, toast, fmtScore, num, setTheme };

@@ -70,4 +70,5 @@ Tes otomatis (`npm test`) memeriksa:
 
 - iPhone tidak mendukung getar dari web. Getar hanya jalan di Android.
 - Suara di HP butuh satu tap dulu (tombol join sudah menanganinya).
-- Font Fredoka diambil dari Google Fonts. Kalau offline, otomatis pakai font sistem.
+- Font (Bowlby One + Bricolage Grotesque) sudah ikut di `public/fonts/`, jadi tampilan sama persis walau Wi-Fi venue tidak ada internet.
+- Tema warna sesi dipilih dari 10 warna sticker. Teks di atas warna tema otomatis hitam atau putih sesuai kontras.

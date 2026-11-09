@@ -18,7 +18,7 @@ const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL ||
 const BOOT = Date.now();
 const RESTART_GRACE_MS = 10000;
 
-const PLAYER_COLORS = ['#ff5252', '#40c4ff', '#69f0ae', '#ffd740', '#e040fb', '#ff9100', '#18ffff', '#b2ff59', '#ff4081', '#7c4dff', '#ffab40', '#64ffda'];
+const PLAYER_COLORS = ['#e8402a', '#ffc83d', '#2fa36b', '#8ad7c1', '#f26ca7', '#ff8a3d', '#b79cff', '#62b6f5', '#a8d44a', '#d9b98c'];
 const AVATARS = ['😎', '🤠', '🥸', '🤓', '😈', '👻', '🤖', '👽', '🐵', '🐸', '🐼', '🦊', '🐯', '🦄', '🐔', '🐙', '🦖', '🍌', '🌶️', '🍕', '🥑', '🧋', '🚀', '⚡'];
 
 // ---------------- App & sockets ----------------

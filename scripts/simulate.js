@@ -79,7 +79,8 @@ function bot(i) {
           else s.emit('bomb:solve', { bombId: bm.id, challengeId: bm.challenge.id }, () => {});
         } else {
           s.emit('bomb:throw', { bombId: bm.id, target: Math.random() < 0.5 ? 'random' : pick(bm.targets).id }, (r) => {
-            if (!r.ok) problems.push(`${name} gagal lempar: ${r.error}`);
+            // Throwing in the same instant the bomb explodes / moves is an expected race, not a bug.
+            if (!r.ok && !/Ronde belum jalan|udah nggak di kamu/.test(r.error)) problems.push(`${name} gagal lempar: ${r.error}`);
           });
         }
       }

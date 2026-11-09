@@ -69,7 +69,7 @@
 
   function buildNone() {
     $stage.innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vw">
-      <div style="font-size:12vw">🎉</div><div class="scr-title">Sprint Event Games</div>
+      <div class="scr-title">Sprint Event Games</div>
       <div class="scr-sub">Belum ada sesi aktif. Host, bikin sesi dulu di <b>/host</b> ya!</div></div>`;
   }
 
@@ -77,10 +77,10 @@
   function buildLobby() {
     const s = st.session;
     $stage.innerHTML = `
-      <div class="scr-head"><div><div class="scr-title"><span class="theme-text">${esc(s.squad)}</span></div><div class="scr-sub">Sprint Games: 💣 Bom Kentang Panas + 🎭 Fake It Till You Make It</div></div>
+      <div class="scr-head"><div><div class="scr-title"><span class="theme-text">${esc(s.squad)}</span></div><div class="scr-sub">Sprint Games: Bom Kentang Panas + Fake It Till You Make It</div></div>
       <div class="scr-sub" id="lcount"></div></div>
       <div class="lobby">
-        <div class="qr-box"><div style="font-size:1.8vw;font-weight:800">Scan buat join!</div><img id="qr" alt="QR" /><div class="code">${esc(s.code)}</div><div class="url" id="jurl"></div></div>
+        <div class="qr-box"><div class="lead">Scan buat join!</div><img id="qr" alt="QR" /><div class="code">${esc(s.code)}</div><div class="url" id="jurl"></div></div>
         <div class="lobby-players" id="lp"></div>
       </div>`;
     const url = joinUrl();
@@ -117,7 +117,7 @@
     if (!key || !key.startsWith('final')) stopFinal();
     if (!key) { $overlay.innerHTML = ''; return; }
     if (key.startsWith('lb')) {
-      $overlay.innerHTML = `<div class="overlay-full"><div class="scr-title center">📊 Leaderboard <span class="theme-text">${esc(st.session.squad)}</span></div>${lbHtml(st.leaderboard)}</div>`;
+      $overlay.innerHTML = `<div class="overlay-full"><div class="scr-title center">Leaderboard <span class="theme-text">${esc(st.session.squad)}</span></div>${lbHtml(st.leaderboard)}</div>`;
       $overlay.querySelectorAll('[data-score]').forEach((el) => countUp(el, Number(el.dataset.score), 1400));
       Sound.ding();
       return;
@@ -136,7 +136,7 @@
     const elapsed = Clock.now() - f.startedAt;
     const podSlot = (e, n) => (e ? `<div class="pod p${n}" id="pod${n}">${av(e)}<div class="nm">${esc(e.name)}</div><div class="sc" data-final="${e.score}">0</div><div class="block">${n}</div></div>` : '');
     $overlay.innerHTML = `<div class="final" id="final">
-      <div class="final-msg" id="fmsg">🥁 Saatnya pengumuman JUARA!</div>
+      <div class="final-msg" id="fmsg">Saatnya pengumuman JUARA!</div>
       <div class="podium">${podSlot(top[1], 2)}${podSlot(top[0], 1)}${podSlot(top[2], 3)}</div>
       <div class="titles" id="ftitles"></div>
       <div id="frest" class="row" style="justify-content:center"></div>
@@ -153,18 +153,18 @@
       else sc.textContent = num(Number(sc.dataset.final));
     };
     at(0, (l) => l && Sound.drumroll(3));
-    at(3500, (l) => { if (top[2]) { $msg.textContent = '🥉 Juara 3'; showPod(3, l); l && Sound.ding(); } });
-    at(7000, (l) => { if (top[1]) { $msg.textContent = '🥈 Juara 2'; showPod(2, l); l && Sound.ding(); } });
+    at(3500, (l) => { if (top[2]) { $msg.textContent = 'Juara 3'; showPod(3, l); l && Sound.ding(); } });
+    at(7000, (l) => { if (top[1]) { $msg.textContent = 'Juara 2'; showPod(2, l); l && Sound.ding(); } });
     at(10500, (l) => { $msg.textContent = 'Dan juara pertama adalah…'; l && Sound.drumroll(3); });
     at(14000, (l) => {
       if (top[0]) {
-        $msg.textContent = `🏆 ${top[0].name} JUARA!`;
+        $msg.textContent = `${top[0].name} JUARA!`;
         showPod(1, l);
         if (l) { Sound.fanfare(); confetti(6000); }
       }
     });
     const titles = f.titles || [];
-    at(19000, () => { $overlay.querySelector('#final').classList.add('compact'); $msg.textContent = '🏅 Gelar Kehormatan'; });
+    at(19000, () => { $overlay.querySelector('#final').classList.add('compact'); $msg.textContent = 'Gelar Kehormatan'; });
     titles.forEach((t, i) => at(19800 + i * 1500, (l) => {
       const box = $overlay.querySelector('#ftitles');
       box.insertAdjacentHTML('beforeend', `<div class="title-card"><div class="ic">${t.icon}</div><div class="tt">${esc(t.title)}</div><div class="wn">${t.winners.map((w) => `${w.avatar} ${esc(w.name)}`).join(', ')}</div><div class="vl">${esc(t.value)}</div></div>`);
@@ -172,7 +172,7 @@
     }));
     at(19800 + titles.length * 1500 + 500, (l) => {
       $overlay.querySelector('#frest').innerHTML = lb.slice(3).map((e) => `<span class="chip" style="font-size:1.5vw">#${e.rank} ${e.avatar} ${esc(e.name)} · ${num(e.score)}</span>`).join('');
-      $msg.textContent = '🎉 Makasih udah main, kalian keren! 🎉';
+      $msg.textContent = 'Makasih udah main, kalian keren!';
       if (l) confetti(4000);
     });
   }
@@ -185,20 +185,20 @@
 
   function buildBomb() {
     $stage.innerHTML = `
-      <div class="scr-head"><div><div class="scr-title">💣 Bom Kentang Panas <span id="bbadges"></span></div><div class="scr-sub" id="bsub"></div></div></div>
+      <div class="scr-head"><div><div class="scr-title">Bom Kentang Panas <span id="bbadges"></span></div><div class="scr-sub" id="bsub"></div></div></div>
       <div class="bomb-stage">
         <div class="stack" style="min-height:0">
           <div class="fuse hidden" id="fuse"><div class="burn" id="burn"></div><div class="spark" id="spark">✨</div></div>
           <div class="bomb-area" id="barea" style="flex:1"></div>
           <div class="trail" id="trail"></div>
         </div>
-        <div class="side-panel"><h3>🏆 Skor</h3><div id="blb"></div></div>
+        <div class="side-panel"><h3>Skor</h3><div id="blb"></div></div>
       </div>`;
   }
 
   function updateBomb() {
     const b = st.bomb;
-    document.getElementById('bbadges').innerHTML = `${b.mega ? '<span class="badge mega">💥 MEGA BOM</span>' : ''}${b.double ? '<span class="badge double">💣💣 BOM GANDA</span>' : ''}`;
+    document.getElementById('bbadges').innerHTML = `${b.mega ? '<span class="badge mega">MEGA BOM</span>' : ''}${b.double ? '<span class="badge double">BOM GANDA</span>' : ''}`;
     document.getElementById('bsub').textContent = b.round ? `Ronde ${b.round} dari ${b.totalRounds}` : `${b.totalRounds} ronde · siap-siap!`;
     document.getElementById('blb').innerHTML = lbHtml(st.leaderboard, true);
     const $area = document.getElementById('barea');
@@ -213,7 +213,7 @@
         const two = b.holders.length > 1;
         $area.innerHTML = b.holders.map((h) => `<div class="bomb-unit ${two ? 'two' : ''}" data-bomb="${h.bombId}"><div class="bomb-big">💣</div><div class="holder">${av(h)}<span class="nm">${esc(h.name)}</span></div></div>`).join('');
       }
-      $trail.innerHTML = b.trail.length ? `🧭 ${b.trail.map((p) => `<span class="t">${p.avatar} ${esc(p.name)}</span>`).join(' → ')}` : '';
+      $trail.innerHTML = b.trail.length ? `Jejak: ${b.trail.map((p) => `<span class="t">${p.avatar} ${esc(p.name)}</span>`).join(' → ')}` : '';
       startBombLoops();
     } else {
       stopBombLoops();
@@ -224,10 +224,10 @@
         key = 'blast-' + b.round;
         html = `<div class="center stack" style="align-items:center"><div style="font-size:10vw">💥</div>
           ${b.lastBlast.captions.map((c) => `<div class="scr-title" style="font-size:3.2vw">${esc(c)}</div>`).join('')}
-          <div class="scr-sub">${b.round >= b.totalRounds ? 'Itu ronde terakhir! 🏁' : `Ronde ${b.round + 1} sebentar lagi…`}</div></div>`;
+          <div class="scr-sub">${b.round >= b.totalRounds ? 'Itu ronde terakhir!' : `Ronde ${b.round + 1} sebentar lagi…`}</div></div>`;
       } else if (b.phase === 'over') {
         key = 'over';
-        html = `<div class="center stack" style="align-items:center"><div style="font-size:10vw">🏁</div><div class="scr-title">Bom Kentang Panas selesai!</div><div class="scr-sub">Cek skor di samping 👉</div></div>`;
+        html = `<div class="center stack" style="align-items:center"><div class="scr-title">Bom Kentang Panas selesai!</div><div class="scr-sub">Cek skor di samping 👉</div></div>`;
       } else {
         key = 'idle-' + b.round;
         html = `<div class="center stack" style="align-items:center"><div style="font-size:12vw;animation:pulse 1.2s infinite">💣</div>
@@ -282,7 +282,7 @@
         area.querySelectorAll('.pass-banner').forEach((x) => x.remove());
         const ban = document.createElement('div');
         ban.className = 'pass-banner';
-        ban.textContent = fx.auto ? `📡 ${nameOf(fx.from)} hilang sinyal → bom nyasar ke ${nameOf(fx.to)}!` : `${nameOf(fx.from)} 💨 ${nameOf(fx.to)}`;
+        ban.textContent = fx.auto ? `${nameOf(fx.from)} hilang sinyal → bom nyasar ke ${nameOf(fx.to)}!` : `${nameOf(fx.from)} → ${nameOf(fx.to)}`;
         area.appendChild(ban);
         setTimeout(() => ban.remove(), 1800);
       }
@@ -308,7 +308,7 @@
 
   function buildFake() {
     $stage.innerHTML = `
-      <div class="scr-head"><div><div class="scr-title">🎭 Fake It Till You Make It <span id="fbadges"></span></div><div class="scr-sub" id="fsub"></div></div>
+      <div class="scr-head"><div><div class="scr-title">Fake It Till You Make It <span id="fbadges"></span></div><div class="scr-sub" id="fsub"></div></div>
       <div class="fk-center"><div class="fk-big-timer" id="ftimer"></div></div></div>
       <div class="fk-banner" id="fban"></div>
       <div class="fk-stage"><div class="fk-cards" id="fcards"></div><svg class="arrows" id="farrows"></svg></div>
@@ -319,7 +319,7 @@
 
   function updateFake() {
     const f = st.fake;
-    document.getElementById('fbadges').innerHTML = f.double ? '<span class="badge mega">🔥 POIN DOBEL</span>' : '';
+    document.getElementById('fbadges').innerHTML = f.double ? '<span class="badge mega">POIN DOBEL</span>' : '';
     document.getElementById('fsub').innerHTML = f.round ? `Ronde ${f.round} dari ${f.totalRounds}${f.category ? ` · Kategori: <b class="theme-text">${esc(f.category)}</b>` : ''}` : `${f.totalRounds} ronde · siap-siap!`;
     const $timer = document.getElementById('ftimer');
     const $ban = document.getElementById('fban');
@@ -338,12 +338,12 @@
 
     if (!ACTIVE.includes(f.phase) && f.phase !== 'result') {
       $cards.innerHTML = '';
-      if (f.phase === 'cancelled') setBan('c' + f.cancelReason, `🔁 ${esc(f.cancelReason)}`);
-      else if (f.phase === 'over') setBan('over', '🏁 Fake It selesai!');
+      if (f.phase === 'cancelled') setBan('c' + f.cancelReason, `${esc(f.cancelReason)}`);
+      else if (f.phase === 'over') setBan('over', 'Fake It selesai!');
       else setBan('idle' + f.round, `Ronde ${f.round + 1} sebentar lagi…`);
       $bot.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:3vw;align-items:start">
-        <div class="side-panel" style="font-size:1.9vw;line-height:1.6">🤫 Semua dapat <b>kata rahasia</b> sama, kecuali <b>si Penipu</b><br>✍️ Gantian kasih <b>satu kata</b> petunjuk (2 putaran)<br>🗣️ Debat, lalu 🗳️ vote!<br>🎯 Nebak penipu: <b>+50</b> · 🎭 Penipu lolos: <b>+150</b></div>
-        <div class="side-panel"><h3>🏆 Skor</h3>${lbHtml(st.leaderboard, true)}</div></div>`;
+        <div class="side-panel" style="font-size:1.9vw;line-height:1.6">Semua dapat <b>kata rahasia</b> sama, kecuali <b>si Penipu</b><br>Gantian kasih <b>satu kata</b> petunjuk (2 putaran)<br>Debat, lalu vote!<br>Nebak penipu: <b>+50</b> · Penipu lolos: <b>+150</b></div>
+        <div class="side-panel"><h3>Skor</h3>${lbHtml(st.leaderboard, true)}</div></div>`;
       return;
     }
 
@@ -352,28 +352,28 @@
 
     switch (f.phase) {
       case 'role':
-        setBan('role' + f.round, `🤫 Cek HP kalian! <span class="muted">Tahan tombol buat lihat kata rahasia</span>`);
+        setBan('role' + f.round, `Cek HP kalian! <span class="muted">Tahan tombol buat lihat kata rahasia</span>`);
         break;
       case 'clue':
-        setBan(`clue-${f.turnPid}-${f.clueRound}`, `Putaran ${f.clueRound}/2 · Giliran <span class="theme-text">${esc(nameOf(f.turnPid))}</span> ✍️`);
+        setBan(`clue-${f.turnPid}-${f.clueRound}`, `Putaran ${f.clueRound}/2 · Giliran <span class="theme-text">${esc(nameOf(f.turnPid))}</span>`);
         break;
       case 'discuss':
-        setBan('discuss', '🗣️ Debat! Siapa yang mencurigakan?');
+        setBan('discuss', 'Debat! Siapa yang mencurigakan?');
         break;
       case 'vote':
-        setBan('vote', `🗳️ Waktunya vote di HP! <span class="muted">(${f.votedIds.length}/${f.order.length})</span>`);
+        setBan('vote', `Waktunya vote di HP! <span class="muted">(${f.votedIds.length}/${f.order.length})</span>`);
         $ban.dataset.key = 'vote-' + f.votedIds.length;
         break;
       case 'reveal':
         runReveal(f);
         break;
       case 'lastchance':
-        setBan('lc', `😱 <span class="theme-text">${esc(nameOf(f.impostor))}</span> ketahuan! Kesempatan terakhir nebak kata…`);
+        setBan('lc', `<span class="theme-text">${esc(nameOf(f.impostor))}</span> ketahuan! Kesempatan terakhir nebak kata…`);
         break;
       case 'result': {
         const r = f.result;
         setBan('res' + f.round, `${r.captions.map((c) => `<div class="fk-caption">${esc(c)}</div>`).join('')}`);
-        $bot.innerHTML = `<div class="center" style="font-size:2.6vw;font-weight:800">Kata rahasia: <span class="fk-word">${esc(f.word)}</span>${r.guess != null ? ` <span class="muted" style="font-size:2vw">· tebakan penipu: "${esc(r.guess)}" ${r.guessCorrect ? '✅' : '❌'}</span>` : ''}</div>`;
+        $bot.innerHTML = `<div class="center" style="font-size:2.6vw;font-weight:800">Kata rahasia: <span class="fk-word">${esc(f.word)}</span>${r.guess != null ? ` <span class="muted" style="font-size:2vw">· tebakan penipu: "${esc(r.guess)}" ${r.guessCorrect ? '(benar!)' : '(salah)'}</span>` : ''}</div>`;
         break;
       }
     }
@@ -403,7 +403,7 @@
       const d = f.phase === 'result' && f.result.deltas[p.id] ? `<div class="delta ${f.result.deltas[p.id] > 0 ? 'pos' : 'neg'}">${G.fmtScore(f.result.deltas[p.id])}</div>` : '';
       return `<div class="fk-card ${isTurn ? 'turn' : ''} ${isImp ? 'impostor' : ''} ${showImp && !isImp ? 'dim' : ''}" data-pid="${p.id}" style="${p.online ? '' : 'opacity:.5'}">
         ${isTurn ? `<div class="turn-timer" data-ends="${f.turnEndsAt}"></div>` : ''}
-        ${f.phase === 'vote' && f.votedIds.includes(p.id) ? '<div class="voted">✅</div>' : ''}
+        ${f.phase === 'vote' && f.votedIds.includes(p.id) ? '<div class="voted">sudah vote</div>' : ''}
         ${t}${av(p)}<div class="nm">${esc(p.name)}</div><div class="clues">${slot(1)}${slot(2)}</div>${d}</div>`;
     }).join('');
   }
@@ -441,14 +441,14 @@
       if (!rv.drum && el < drumAt) {
         const v = R.seq[k - 1];
         $ban.dataset.key = 'rv' + k;
-        $ban.innerHTML = k === 0 ? '📬 Buka vote satu per satu…' : `${esc(nameOf(v.from))} ➜ <span class="theme-text">${esc(nameOf(v.to))}</span>`;
-        if (n === 0) $ban.innerHTML = '🤷 Nggak ada yang vote!';
+        $ban.innerHTML = k === 0 ? 'Buka vote satu per satu…' : `${esc(nameOf(v.from))} ➜ <span class="theme-text">${esc(nameOf(v.to))}</span>`;
+        if (n === 0) $ban.innerHTML = 'Nggak ada yang vote!';
       }
     }
     if (el >= drumAt && !rv.drum) {
       rv.drum = true;
       $ban.dataset.key = 'drum';
-      $ban.innerHTML = '🥁 Dan penipunya adalah…';
+      $ban.innerHTML = 'Dan penipunya adalah…';
       if (live && el < unmaskAt) Sound.drumroll(Math.max(0.5, (unmaskAt - el) / 1000 - 0.2));
     }
     if (el >= unmaskAt && !rv.unmasked) {
@@ -513,7 +513,9 @@
       const p3 = `${x2 - ux * hs + uy * hs * 0.6},${y2 - uy * hs - ux * hs * 0.6}`;
       const isLast = i === k - 1;
       const cls = isLast && animateLast ? 'draw' : isLast ? '' : 'old';
-      out += `<g class="${cls === 'old' ? 'old' : ''}"><path class="${cls === 'draw' ? 'draw' : ''}" d="M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" stroke="${color}" /><polygon class="${cls === 'draw' ? 'draw' : ''}" points="${p1} ${p2} ${p3}" fill="${color}" /></g>`;
+      const dc = cls === 'draw' ? 'draw' : '';
+      const d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+      out += `<g class="${cls === 'old' ? 'old' : ''}"><path class="ink ${dc}" d="${d}" /><path class="col ${dc}" d="${d}" stroke="${color}" /><polygon class="${dc}" points="${p1} ${p2} ${p3}" fill="${color}" /></g>`;
     });
     svg.innerHTML = out;
   }
