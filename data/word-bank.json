@@ -1,0 +1,8 @@
+[
+  { "kategori": "Makanan", "kata": ["Martabak", "Seblak", "Nasi Padang", "Bakso", "Sate", "Gorengan", "Indomie", "Rendang", "Es Teh", "Kerupuk"] },
+  { "kategori": "Tempat", "kata": ["Monas", "Ancol", "Bali", "Mall", "Stasiun", "Bandara", "Pantai", "Puncak", "Pasar", "Bioskop"] },
+  { "kategori": "Kantor", "kata": ["Meeting", "Lembur", "Gajian", "Rapat Zoom", "Pantry", "Lift", "Printer", "Absen", "Cuti", "Deadline"] },
+  { "kategori": "Hewan", "kata": ["Kucing", "Cicak", "Ayam", "Kambing", "Gajah", "Nyamuk", "Ikan Lele", "Monyet", "Bebek", "Komodo"] },
+  { "kategori": "Kegiatan", "kata": ["Mudik", "Kondangan", "Arisan", "Karaoke", "Nongkrong", "Jogging", "Rebahan", "Belanja Online", "Ngopi", "Begadang"] },
+  { "kategori": "Benda", "kata": ["Payung", "Helm", "Sendal Jepit", "Kipas Angin", "Galon", "Rice Cooker", "Charger", "Kunci Motor", "Remote TV", "Bantal"] }
+]

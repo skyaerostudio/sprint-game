@@ -1,0 +1,40 @@
+{
+  "_catatan": "Mini-challenge Bom Kentang Panas. Edit file ini untuk menambah isi. Hapus tipe dari 'aktif' untuk mematikannya. Perubahan langsung terbaca tanpa restart.",
+  "aktif": ["tap", "hitung", "beda", "kebalik", "warna", "jebakan", "geser", "tahan"],
+  "tap": { "jumlah": 15 },
+  "hitung": { "min": 2, "max": 12, "operasi": ["×", "+", "−"] },
+  "beda": {
+    "pasangan": [
+      ["🍎", "🍏"], ["😀", "😃"], ["🐶", "🐕"], ["🌕", "🌝"], ["⚽", "🏐"],
+      ["🐱", "😺"], ["🙈", "🙉"], ["🍊", "🍑"], ["❤️", "🧡"], ["🌲", "🌳"],
+      ["🚗", "🚙"], ["⌚", "⏰"], ["👀", "👁️"], ["🐸", "🐢"], ["🍩", "🥯"]
+    ]
+  },
+  "kebalik": {
+    "kata": ["PISANG", "BAKSO", "KOPI", "SATE", "GAJAH", "BOLA", "MEJA", "RUMAH", "KUCING", "NASI", "TAHU", "KERJA", "LIBUR", "GAJI", "SENIN", "BOSS", "RAPAT", "LEMBUR", "KANTOR", "TEMPE"]
+  },
+  "warna": {
+    "warna": [
+      { "nama": "MERAH", "hex": "#e53935" },
+      { "nama": "BIRU", "hex": "#1e88e5" },
+      { "nama": "HIJAU", "hex": "#43a047" },
+      { "nama": "KUNING", "hex": "#fdd835" },
+      { "nama": "UNGU", "hex": "#8e24aa" },
+      { "nama": "ORANYE", "hex": "#fb8c00" }
+    ]
+  },
+  "jebakan": [
+    { "tanya": "Mana yang lebih berat: 1 kg kapas atau 1 kg besi?", "pilihan": ["Kapas", "Besi", "Sama", "Tergantung cuaca"], "jawaban": "Sama" },
+    { "tanya": "Ada berapa bulan yang punya tanggal 28?", "pilihan": ["1", "2", "6", "Semuanya"], "jawaban": "Semuanya" },
+    { "tanya": "Ayahnya Budi punya 3 anak: Satu, Dua, dan…?", "pilihan": ["Tiga", "Budi", "Empat", "Nol"], "jawaban": "Budi" },
+    { "tanya": "Kamu lomba lari dan menyalip orang di posisi 2. Sekarang kamu posisi berapa?", "pilihan": ["1", "2", "3", "Terakhir"], "jawaban": "2" },
+    { "tanya": "Ayam jago bertelur di atas genteng. Telurnya jatuh ke mana?", "pilihan": ["Kiri", "Kanan", "Ayam jago nggak bertelur", "Ke tengah"], "jawaban": "Ayam jago nggak bertelur" },
+    { "tanya": "Berapa hasil 2 + 2 × 2?", "pilihan": ["8", "6", "4", "10"], "jawaban": "6" },
+    { "tanya": "Pesawat jatuh tepat di perbatasan dua negara. Korban selamat dikubur di mana?", "pilihan": ["Negara A", "Negara B", "Nggak dikubur, kan selamat", "Di laut"], "jawaban": "Nggak dikubur, kan selamat" },
+    { "tanya": "Apa yang makin dikurangi malah makin besar?", "pilihan": ["Lubang", "Gaji", "Utang", "Perut"], "jawaban": "Lubang" },
+    { "tanya": "Hari Senin + 3 hari = ?", "pilihan": ["Rabu", "Kamis", "Jumat", "Libur"], "jawaban": "Kamis" },
+    { "tanya": "Dalam 1 lusin ada berapa?", "pilihan": ["10", "12", "20", "24"], "jawaban": "12" }
+  ],
+  "geser": { "lebarZona": 12 },
+  "tahan": { "targetMs": 2000, "toleransiMs": 300 }
+}

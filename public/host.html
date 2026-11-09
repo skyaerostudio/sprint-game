@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sprint Games: Panel Host</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E💣%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body class="host">
+  <div class="host-wrap" id="login">
+    <div class="card" style="max-width:420px;margin:12vh auto 0">
+      <h2>🎛️ Panel Host</h2>
+      <input type="password" id="pw" placeholder="Password host" autocomplete="current-password" />
+      <div class="err" id="lerr"></div>
+      <button class="btn primary big" id="lgo">Masuk</button>
+    </div>
+  </div>
+
+  <div class="host-wrap hidden" id="main">
+    <div class="host-top" id="top"></div>
+    <div class="tabs" id="tabs">
+      <button data-tab="sesi" class="on">📁 Sesi</button>
+      <button data-tab="pemain">👥 Pemain & Skor</button>
+      <button data-tab="bom">💣 Bom</button>
+      <button data-tab="fake">🎭 Fake It</button>
+      <button data-tab="kata">📚 Bank Kata</button>
+    </div>
+
+    <section data-panel="sesi" class="stack">
+      <div class="card">
+        <h2>➕ Bikin sesi baru</h2>
+        <div class="field"><label>Nama squad</label><input type="text" id="squad" maxlength="40" placeholder="Misal: Squad Phoenix" /></div>
+        <div class="field"><label>Warna tema</label><div class="swatches" id="swatches"></div></div>
+        <button class="btn primary" id="create">Bikin & tampilkan di layar besar</button>
+      </div>
+      <div class="card"><h2>📂 Semua sesi</h2><div class="stack" id="sessions"></div></div>
+    </section>
+
+    <section data-panel="pemain" class="stack hidden">
+      <div class="card"><h2>👥 Pemain</h2><div id="players"></div></div>
+      <div class="card"><h2>📜 Riwayat poin terakhir</h2><div class="loglist" id="log"></div></div>
+      <div class="card"><h2>🏅 Gelar sementara</h2><div id="titles"></div></div>
+      <div class="card"><h2>⚠️ Zona bahaya</h2>
+        <div class="row"><button class="btn bad" data-act="resetSession" data-confirm="Reset sesi? Semua skor, statistik, dan progres game balik ke 0. Pemain tetap tersambung.">🔄 Reset sesi</button></div>
+      </div>
+    </section>
+
+    <section data-panel="bom" class="stack hidden">
+      <div class="card"><h2>💣 Bom Kentang Panas</h2><div id="bstatus"></div>
+        <div class="row">
+          <button class="btn primary" data-act="bomb:start">▶️ Mulai Ronde</button>
+          <button class="btn" data-act="showGame" data-args='{"game":"bomb"}'>📺 Tampilkan di layar</button>
+          <button class="btn bad" data-act="bomb:end" data-confirm="Akhiri game Bom Kentang Panas?">🏁 Akhiri Game</button>
+        </div>
+      </div>
+      <div class="card"><h2>⚙️ Pengaturan</h2><div id="bsettings"></div></div>
+    </section>
+
+    <section data-panel="fake" class="stack hidden">
+      <div class="card"><h2>🎭 Fake It Till You Make It</h2><div id="fstatus"></div>
+        <div class="row">
+          <button class="btn primary" data-act="fake:start">▶️ Mulai Ronde</button>
+          <button class="btn" data-act="showGame" data-args='{"game":"fake"}'>📺 Tampilkan di layar</button>
+        </div>
+        <div class="row">
+          <button class="btn" data-act="fake:skip">⏭️ Skip fase</button>
+          <button class="btn" data-act="fake:skipTurn">🤐 Lewati giliran</button>
+          <button class="btn" data-act="fake:addTime" data-args='{"sec":30}'>⏱️ +30 detik</button>
+          <button class="btn warn" data-act="fake:cancel" data-confirm="Batalkan ronde ini? Tanpa poin, ronde diulang dengan penipu & kata baru.">🔁 Batalkan & ulang</button>
+          <button class="btn bad" data-act="fake:end" data-confirm="Akhiri game Fake It?">🏁 Akhiri Game</button>
+        </div>
+      </div>
+      <div class="card"><h2>🤫 Rahasia (cuma buat host)</h2><div id="fsecret"></div></div>
+      <div class="card"><h2>⚙️ Pengaturan</h2><div id="fsettings"></div></div>
+    </section>
+
+    <section data-panel="kata" class="stack hidden">
+      <div class="card"><h2>➕ Tambah kata / kategori</h2>
+        <div class="grid2">
+          <div class="field"><label>Kategori (baru atau yang sudah ada)</label><input type="text" id="wcat" maxlength="30" placeholder="Misal: Inside Joke" list="catlist" /><datalist id="catlist"></datalist></div>
+          <div class="field"><label>Kata (pisahkan dengan koma)</label><input type="text" id="wwords" placeholder="Misal: Pak Bos, Kopi Sachet" /></div>
+        </div>
+        <button class="btn primary" id="wadd">Simpan ke bank kata</button>
+        <div class="muted">Bank kata dipakai semua sesi. Kategori aktif per sesi diatur di tab 🎭 Fake It.</div>
+      </div>
+      <div class="card"><h2>📚 Bank kata</h2><div id="wbank"></div></div>
+    </section>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/host.js"></script>
+</body>
+</html>
