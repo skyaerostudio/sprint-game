@@ -4,10 +4,13 @@ Aplikasi web untuk Sprint Event per squad. **Satu squad main dalam satu waktu (~
 
 **Bahasa:** SEMUA teks di aplikasi (layar HP pemain, big screen, panel host, notifikasi, caption lucu, mini-challenge, bank kata) wajib dalam **Bahasa Indonesia** yang santai dan lucu.
 
-Dua game, satu leaderboard **individu**:
+Tiga game, satu leaderboard **individu**:
 
 1. **Bom Kentang Panas (Hot Potato Bomb)** (pembuka, ~10–15 menit)
-2. **Fake It Till You Make It** (penutup, ~20 menit)
+2. **Satu Dalam Sejuta** (tengah, ~12–15 menit), spesifikasi lengkap di [PRD_SATU_DALAM_SEJUTA.md](PRD_SATU_DALAM_SEJUTA.md)
+3. **Fake It Till You Make It** (penutup, ~20 menit)
+
+Host bisa memilih game mana yang dimainkan dan urutannya per sesi.
 
 Keduanya dimainkan individu. Pemenang keseluruhan (atau top 3) berdasarkan total poin dapat hadiah.
 
@@ -55,6 +58,7 @@ Semua pemain main pakai HP masing-masing. Satu laptop menampilkan big screen (pr
   - "🎭 Aktor Terbaik" (penipu yang paling sering lolos)
   - "🕵️ Detektif Kantor" (paling banyak menebak penipu dengan benar)
   - "🤡 Paling Sering Dituduh" (paling banyak dapat vote padahal bukan penipu)
+  - Satu Dalam Sejuta: "🐙 Penghuni Palung", "🛟 Si Pelampung", "🤓 Profesor Sok Pinter", "🦪 Pemburu Mutiara" (lihat PRD)
 
 ---
 
