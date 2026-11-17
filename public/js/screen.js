@@ -657,7 +657,7 @@
       elm.classList.toggle('sok', !!(stp && stp.sok));
       elm.style.setProperty('--row', stp ? stepRow(stp) : 0);
       const tag = elm.querySelector('.tag');
-      const txt = stp ? `${stp.ngambang ? '🛟 Ngambang' : esc(stp.label)}<b>+${num(stp.points)}</b>` : '';
+      const txt = stp ? `<span class="t">${stp.ngambang ? '🛟 Ngambang' : esc(stp.label)}</span><b>+${num(stp.points)}</b>` : '';
       if (tag.innerHTML !== txt) tag.innerHTML = txt;
     });
   }

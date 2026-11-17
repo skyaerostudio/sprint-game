@@ -101,6 +101,13 @@ test('sering_salah goes to Sidang Banding, never matched', () => {
   assert.equal(m('negara', 'Dubay').type, 'sering_salah'); // typo of a sering_salah entry
 });
 
+test('stripPrefix cleans answers saved from banding', () => {
+  const { stripPrefix } = require('../lib/matcher');
+  assert.equal(stripPrefix(P('buah'), 'Buah Kepel Raksasa'), 'Kepel Raksasa');
+  assert.equal(stripPrefix(P('buah'), 'Buah'), 'Buah'); // single word stays
+  assert.equal(stripPrefix(P('kota'), 'Kotabaru'), 'Kotabaru');
+});
+
 test('empty and unknown input', () => {
   assert.equal(m('buah', '   ').type, 'empty');
   assert.equal(m('buah', '!!!').type, 'empty');

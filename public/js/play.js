@@ -642,7 +642,7 @@
       double ? '<span class="chip sdj-tag">×2 Penyelaman Ganda</span>' : '',
     ].join('');
     return `<div class="panel center sdj-res ${r.mutiara ? 'pearl' : ''}"><div class="mid-msg">Kamu menjawab <b class="hl">${esc(r.label)}</b></div>
-      <div class="emoji-xl">${r.emoji || '🤿'}</div><div class="big-msg">${esc(r.zona)} · ${depthTxt(r.depth)}</div>
+      <div class="emoji-xl">${r.emoji || '🤿'}</div><div class="big-msg">${esc(r.zona)}</div><div class="mid-msg muted">kedalaman ${depthTxt(r.depth)}</div>
       <div class="big-msg pos-text">+${num(r.points)}</div><div class="row" style="justify-content:center">${tags}</div></div>`;
   }
 

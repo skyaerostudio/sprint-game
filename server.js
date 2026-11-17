@@ -41,7 +41,7 @@ try {
 // ---------------- App & sockets ----------------
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { pingInterval: 4000, pingTimeout: 5000, maxHttpBufferSize: 1e5 });
+const io = new Server(server, { pingInterval: 4000, pingTimeout: 5000, maxHttpBufferSize: 1e6 }); // 1 MB: room for importing the Satu Dalam Sejuta bank
 
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
@@ -555,6 +555,13 @@ const HOST_ACTIONS = {
   'sdj:correct': (a) => sdj.correct(needActive(), ctx, a),
   'sdj:end': () => sdj.end(needActive(), ctx),
   'sdj:settings': (a) => sdj.setSettings(needActive(), ctx, a.patch || {}),
+  // Satu Dalam Sejuta bank editor. The bank is fetched on demand (not pushed with every host:state).
+  'bank:get': () => ({ ok: true, bank: promptbank.get() }),
+  'bank:op'(a) {
+    const res = promptbank.applyOp(a.op);
+    if (res.ok) refreshAll();
+    return res;
+  },
   'words:add'({ kategori, kata }) {
     const cat = String(kategori || '').trim().slice(0, 30);
     const words = (Array.isArray(kata) ? kata : String(kata || '').split(','))
