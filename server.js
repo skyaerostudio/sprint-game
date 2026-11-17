@@ -9,6 +9,7 @@ const QRCode = require('qrcode');
 const store = require('./lib/store');
 const bomb = require('./lib/bomb');
 const fake = require('./lib/fakeit');
+const promptbank = require('./lib/promptbank');
 const { rid, pick } = require('./lib/util');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -20,6 +21,17 @@ const RESTART_GRACE_MS = 10000;
 
 const PLAYER_COLORS = ['#e8402a', '#ffc83d', '#2fa36b', '#8ad7c1', '#f26ca7', '#ff8a3d', '#b79cff', '#62b6f5', '#a8d44a', '#d9b98c'];
 const AVATARS = ['😎', '🤠', '🥸', '🤓', '😈', '👻', '🤖', '👽', '🐵', '🐸', '🐼', '🦊', '🐯', '🦄', '🐔', '🐙', '🦖', '🍌', '🌶️', '🍕', '🥑', '🧋', '🚀', '⚡'];
+
+// Satu Dalam Sejuta bank: refuse to start when data/prompts.json is invalid (PRD §5).
+try {
+  const bank = promptbank.init();
+  console.log(`[prompts] ${bank.prompts.length} prompt, ${bank.prompts.reduce((n, p) => n + p.jawaban.length, 0)} jawaban (versi ${bank.versi || '-'})`);
+} catch (e) {
+  console.error(`
+❌ Server nggak bisa start: ${e.message}
+`);
+  process.exit(1);
+}
 
 // ---------------- App & sockets ----------------
 const app = express();
