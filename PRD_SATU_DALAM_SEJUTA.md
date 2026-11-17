@@ -2,8 +2,7 @@
 
 Mode ketiga untuk aplikasi Sprint Event Games, terinspirasi dari game viral **Krillion** (krillion.io). Dokumen ini melengkapi `SPEC.md`: semua aturan sesi, join, leaderboard individu, panel host, dan bahasa (full Bahasa Indonesia) tetap berlaku.
 
-**Sumber data:** semua prompt, jawaban, tier, alias, dan angka skoring mode ini diambil dari **`data/prompts.json`** (file terlampir, versi 2026-11-17). File `Bank_Jawaban_Satu_Dalam_Sejuta.xlsx` hanya salinan untuk review manusia; aplikasi **tidak** membaca Excel.
-
+**Sumber data:** semua prompt, jawaban, tier, alias, dan angka skoring mode ini diambil dari @prompts.json (file terlampir, versi 2026-11-17).
 ---
 
 ## 1. Latar belakang: analisis Krillion
