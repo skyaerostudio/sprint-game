@@ -110,6 +110,14 @@
       [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.25, { type: 'square', gain: 0.15, when: i * 0.13 }));
       [1047, 1319, 1568].forEach((f) => tone(f, 1.2, { type: 'triangle', gain: 0.15, when: 0.55 }));
     },
+    // Satu Dalam Sejuta
+    blub() { tone(180, 0.22, { gain: 0.35, slideTo: 620 }); tone(260, 0.16, { gain: 0.2, slideTo: 760, when: 0.12 }); },
+    bubbles(n = 6) { for (let i = 0; i < n; i++) tone(320 + Math.random() * 520, 0.09, { gain: 0.14, slideTo: 900 + Math.random() * 700, when: i * 0.06 + Math.random() * 0.03 }); },
+    tetot() { tone(520, 0.22, { type: 'square', gain: 0.16 }); tone(330, 0.5, { type: 'square', gain: 0.16, when: 0.26 }); },
+    sparkle() {
+      [1568, 2093, 2637, 3136, 2637, 3136, 4186].forEach((f, i) => tone(f, 0.3, { type: 'triangle', gain: 0.11, when: i * 0.07 }));
+      tone(1047, 1.4, { type: 'sine', gain: 0.12, when: 0.5 });
+    },
     drumroll(sec = 3) {
       const c = ctx();
       if (!c || c.state !== 'running') return;

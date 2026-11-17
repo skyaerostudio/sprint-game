@@ -9,6 +9,8 @@ const QRCode = require('qrcode');
 const store = require('./lib/store');
 const bomb = require('./lib/bomb');
 const fake = require('./lib/fakeit');
+const promptbank = require('./lib/promptbank');
+const sdj = require('./lib/sdj');
 const { rid, pick } = require('./lib/util');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -18,13 +20,28 @@ const PUBLIC_URL = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL ||
 const BOOT = Date.now();
 const RESTART_GRACE_MS = 10000;
 
+// Game keys + display names. Order per session is configurable by the host.
+const GAMES = { bomb: 'Bom Kentang Panas', sdj: 'Satu Dalam Sejuta', fake: 'Fake It Till You Make It' };
+const DEFAULT_ORDER = ['bomb', 'sdj', 'fake'];
+
 const PLAYER_COLORS = ['#e8402a', '#ffc83d', '#2fa36b', '#8ad7c1', '#f26ca7', '#ff8a3d', '#b79cff', '#62b6f5', '#a8d44a', '#d9b98c'];
 const AVATARS = ['😎', '🤠', '🥸', '🤓', '😈', '👻', '🤖', '👽', '🐵', '🐸', '🐼', '🦊', '🐯', '🦄', '🐔', '🐙', '🦖', '🍌', '🌶️', '🍕', '🥑', '🧋', '🚀', '⚡'];
+
+// Satu Dalam Sejuta bank: refuse to start when data/prompts.json is invalid (PRD §5).
+try {
+  const bank = promptbank.init();
+  console.log(`[prompts] ${bank.prompts.length} prompt, ${bank.prompts.reduce((n, p) => n + p.jawaban.length, 0)} jawaban (versi ${bank.versi || '-'})`);
+} catch (e) {
+  console.error(`
+❌ Server nggak bisa start: ${e.message}
+`);
+  process.exit(1);
+}
 
 // ---------------- App & sockets ----------------
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { pingInterval: 4000, pingTimeout: 5000, maxHttpBufferSize: 1e5 });
+const io = new Server(server, { pingInterval: 4000, pingTimeout: 5000, maxHttpBufferSize: 1e6 }); // 1 MB: room for importing the Satu Dalam Sejuta bank
 
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
@@ -52,6 +69,12 @@ app.get('/api/qr.svg', async (req, res) => {
 const sessions = store.loadSessions();
 const meta = store.loadMeta();
 if (meta.activeId && !sessions.has(meta.activeId)) meta.activeId = null;
+if (!meta.sdjUsage) meta.sdjUsage = {};
+// Sessions saved before Satu Dalam Sejuta existed get the new state on load.
+for (const s of sessions.values()) {
+  if (!s.sdj) s.sdj = sdj.defaultState();
+  if (!Array.isArray(s.order)) s.order = [...DEFAULT_ORDER];
+}
 const presence = new Map(); // `${sid}:${pid}` -> { sockets:Set, disconnectedAt }
 const dirty = new Set();
 const pending = new Set();
@@ -103,7 +126,14 @@ const ctx = {
   wordBank: () => store.wordBank.get(),
   fakeBusy: (s) => fake.isBusy(s),
   bombBusy: (s) => s.bomb.phase === 'live',
+  sdjBusy: (s) => sdj.isBusy(s),
+  promptUsage: () => meta.sdjUsage,
+  bumpPromptUsage(id) {
+    meta.sdjUsage[id] = (meta.sdjUsage[id] || 0) + 1;
+    store.saveMeta(meta);
+  },
 };
+const anyBusy = (s) => s.bomb.phase === 'live' || fake.isBusy(s) || sdj.isBusy(s);
 
 function emitFx(s, ev) {
   const payload = { ...ev, at: Date.now(), sid: s.id };
@@ -142,6 +172,8 @@ function createSession(squad, color) {
     log: [],
     bomb: bomb.defaultState(),
     fake: fake.defaultState(),
+    sdj: sdj.defaultState(),
+    order: [...DEFAULT_ORDER],
   };
   sessions.set(s.id, s);
   return s;
@@ -176,12 +208,18 @@ function computeTitles(s) {
   add('🎭', 'Aktor Terbaik', 'Penipu yang paling sering lolos', ps.map((p) => ({ p, v: p.stats.impostorEscapes })), (v) => `lolos ${v}×`);
   add('🕵️', 'Detektif Kantor', 'Paling jago nebak penipu', ps.map((p) => ({ p, v: p.stats.correctVotes })), (v) => `${v} tebakan benar`);
   add('🤡', 'Paling Sering Dituduh', 'Padahal bukan penipu…', ps.map((p) => ({ p, v: p.stats.wrongAccused })), (v) => `${v} vote nyasar`);
+  const t = sdj.totals(s);
+  const dv = (p, k) => (t[p.id] ? t[p.id][k] : 0);
+  add('🐙', 'Penghuni Palung', 'Total kedalaman paling dalam', ps.map((p) => ({ p, v: dv(p, 'depth') })), (v) => `${v.toLocaleString('id-ID')} m`);
+  add('🛟', 'Si Pelampung', 'Paling sering jawab yang pasaran', ps.map((p) => ({ p, v: dv(p, 'surface') })), (v) => `${v}× di Permukaan`);
+  add('🤓', 'Profesor Sok Pinter', 'Dikira langka, ternyata pasaran', ps.map((p) => ({ p, v: dv(p, 'sok') })), (v) => `${v}× kena cap`);
+  add('🦪', 'Pemburu Mutiara', 'Nemu jawaban Satu Dalam Sejuta', ps.map((p) => ({ p, v: dv(p, 'mutiara') })), (v) => `${v} Mutiara`);
   return titles;
 }
 
 // ---------------- Views ----------------
 function sessionInfo(s) {
-  return { id: s.id, code: s.code, squad: s.squad, color: s.color, status: s.status };
+  return { id: s.id, code: s.code, squad: s.squad, color: s.color, status: s.status, order: (s.order || DEFAULT_ORDER).map((k) => ({ key: k, name: GAMES[k] })) };
 }
 
 function playerView(s, pid) {
@@ -199,6 +237,7 @@ function playerView(s, pid) {
     final: !!s.final,
     bomb: s.activeGame === 'bomb' ? bomb.playerView(s, ctx, pid) : null,
     fake: s.activeGame === 'fake' ? fake.playerView(s, ctx, pid) : null,
+    sdj: s.activeGame === 'sdj' ? sdj.playerView(s, ctx, pid) : null,
   };
 }
 
@@ -216,6 +255,7 @@ function screenView(s) {
     final: s.final ? { startedAt: s.final.startedAt, titles: computeTitles(s), leaderboard: lb } : null,
     bomb: s.activeGame === 'bomb' ? bomb.screenView(s, ctx) : null,
     fake: s.activeGame === 'fake' ? fake.screenView(s, ctx) : null,
+    sdj: s.activeGame === 'sdj' ? sdj.screenView(s, ctx) : null,
   };
 }
 
@@ -247,6 +287,7 @@ function hostView() {
           log: s.log.slice(-15).reverse().map((l) => ({ ...l, name: s.players[l.pid] ? s.players[l.pid].name : '?' })),
           bomb: bomb.hostView(s, ctx),
           fake: fake.hostView(s, ctx),
+          sdj: sdj.hostView(s, ctx),
           titles: computeTitles(s),
         }
       : null,
@@ -349,10 +390,13 @@ function resetSession(s) {
   }
   const bs = s.bomb.settings;
   const fs = s.fake.settings;
+  const ss = { ...s.sdj.settings, nextPrompt: null };
   s.bomb = bomb.defaultState();
   s.bomb.settings = bs;
   s.fake = fake.defaultState();
   s.fake.settings = fs;
+  s.sdj = sdj.defaultState();
+  s.sdj.settings = ss;
   s.activeGame = null;
   s.overlay = null;
   s.final = null;
@@ -389,6 +433,7 @@ const HOST_ACTIONS = {
     s.status = 'closed';
     if (s.bomb.phase === 'live') { s.bomb.phase = 'over'; s.bomb.bombs = []; }
     if (fake.isBusy(s) || s.fake.phase === 'cancelled') { s.fake.phase = 'over'; s.fake.r = null; s.fake.restartAt = 0; }
+    if (sdj.isBusy(s)) { s.sdj.phase = 'over'; s.sdj.r = null; }
     if (meta.activeId === id) meta.activeId = null;
     store.saveMeta(meta);
     emitFx(s, { type: 'closed' });
@@ -433,7 +478,7 @@ const HOST_ACTIONS = {
   },
   showLobby() {
     const s = needActive();
-    if (s.bomb.phase === 'live' || fake.isBusy(s)) return err('Masih ada ronde yang jalan.');
+    if (anyBusy(s)) return err('Masih ada ronde yang jalan.');
     s.activeGame = null;
     s.overlay = null;
     s.final = null;
@@ -442,8 +487,9 @@ const HOST_ACTIONS = {
   },
   showGame({ game }) {
     const s = needActive();
-    if (!['bomb', 'fake'].includes(game)) return err('Game nggak dikenal.');
-    if ((game === 'bomb' && fake.isBusy(s)) || (game === 'fake' && s.bomb.phase === 'live')) return err('Game lain masih jalan.');
+    if (!GAMES[game]) return err('Game nggak dikenal.');
+    const busy = { bomb: s.bomb.phase === 'live', fake: fake.isBusy(s), sdj: sdj.isBusy(s) };
+    if (Object.keys(busy).some((k) => k !== game && busy[k])) return err('Game lain masih jalan.');
     s.activeGame = game;
     s.overlay = null;
     s.final = null;
@@ -458,7 +504,7 @@ const HOST_ACTIONS = {
   },
   revealFinal() {
     const s = needActive();
-    if (s.bomb.phase === 'live' || fake.isBusy(s)) return err('Masih ada ronde yang jalan.');
+    if (anyBusy(s)) return err('Masih ada ronde yang jalan.');
     s.final = { startedAt: Date.now() };
     s.overlay = null;
     emitFx(s, { type: 'final' });
@@ -475,16 +521,47 @@ const HOST_ACTIONS = {
     resetSession(needActive());
     return { ok: true };
   },
-  'bomb:start': () => bomb.start(needActive(), ctx),
+  setOrder({ order }) {
+    const s = needActive();
+    const list = Array.isArray(order) ? [...new Set(order.map(String))].filter((k) => GAMES[k]) : [];
+    if (!list.length) return err('Minimal satu game dimainkan.');
+    s.order = list;
+    changed(s);
+    return { ok: true };
+  },
+  'bomb:start'() {
+    const s = needActive();
+    if (sdj.isBusy(s)) return err('Prompt Satu Dalam Sejuta masih jalan. Selesaikan dulu.');
+    return bomb.start(s, ctx);
+  },
   'bomb:end': () => bomb.end(needActive(), ctx),
   'bomb:settings': (a) => bomb.setSettings(needActive(), ctx, a.patch || {}),
-  'fake:start': () => fake.start(needActive(), ctx),
+  'fake:start'() {
+    const s = needActive();
+    if (sdj.isBusy(s)) return err('Prompt Satu Dalam Sejuta masih jalan. Selesaikan dulu.');
+    return fake.start(s, ctx);
+  },
   'fake:skip': () => fake.skipPhase(needActive(), ctx),
   'fake:skipTurn': () => fake.skipTurn(needActive(), ctx),
   'fake:addTime': (a) => fake.addTime(needActive(), ctx, Number(a.sec) || 30),
   'fake:cancel': () => fake.cancel(needActive(), ctx, 'Ronde dibatalkan host. Diulang sebentar lagi!'),
   'fake:end': () => fake.end(needActive(), ctx),
   'fake:settings': (a) => fake.setSettings(needActive(), ctx, a.patch || {}),
+  'sdj:start': () => sdj.start(needActive(), ctx),
+  'sdj:endAnswer': () => sdj.endAnswer(needActive(), ctx),
+  'sdj:skip': () => sdj.skip(needActive(), ctx),
+  'sdj:addTime': (a) => sdj.addTime(needActive(), ctx, Number(a.sec) || 15),
+  'sdj:judge': (a) => sdj.judge(needActive(), ctx, a),
+  'sdj:correct': (a) => sdj.correct(needActive(), ctx, a),
+  'sdj:end': () => sdj.end(needActive(), ctx),
+  'sdj:settings': (a) => sdj.setSettings(needActive(), ctx, a.patch || {}),
+  // Satu Dalam Sejuta bank editor. The bank is fetched on demand (not pushed with every host:state).
+  'bank:get': () => ({ ok: true, bank: promptbank.get() }),
+  'bank:op'(a) {
+    const res = promptbank.applyOp(a.op);
+    if (res.ok) refreshAll();
+    return res;
+  },
   'words:add'({ kategori, kata }) {
     const cat = String(kategori || '').trim().slice(0, 30);
     const words = (Array.isArray(kata) ? kata : String(kata || '').split(','))
@@ -603,6 +680,11 @@ io.on('connection', (socket) => {
   socket.on('fake:vote', playerAction((s, pid, d) => fake.vote(s, ctx, pid, d.target)));
   socket.on('fake:guess', playerAction((s, pid, d) => fake.submitGuess(s, ctx, pid, d.text)));
 
+  socket.on('sdj:submit', playerAction((s, pid, d) => sdj.submit(s, ctx, pid, d.text)));
+  socket.on('sdj:choose', playerAction((s, pid, d) => sdj.choose(s, ctx, pid, d.teks)));
+  socket.on('sdj:lock', playerAction((s, pid) => sdj.lock(s, ctx, pid)));
+  socket.on('sdj:appeal', playerAction((s, pid) => sdj.appeal(s, ctx, pid)));
+
   socket.on('disconnect', () => detach(socket));
 });
 
@@ -614,6 +696,7 @@ setInterval(() => {
     try {
       bomb.tick(s, ctx, now);
       fake.tick(s, ctx, now);
+      sdj.tick(s, ctx, now);
     } catch (e) {
       console.error('[tick]', e);
     }

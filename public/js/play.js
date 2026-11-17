@@ -106,6 +106,12 @@
       case 'fake:phase':
         if (fx.phase === 'vote') { Sound.notify(); vibrate(150); }
         break;
+      case 'sdj:start':
+        vibrate(150);
+        break;
+      case 'sdj:phase':
+        if (fx.phase === 'banding' || fx.phase === 'reveal') Sound.notify();
+        break;
       case 'score':
         if (fx.pid === me) toast(`Host ngasih kamu ${G.fmtScore(fx.delta)} poin`);
         break;
@@ -125,7 +131,7 @@
     $app.innerHTML = `
       <div style="margin-top:6px">
         <div class="brand">Sprint<br><span>Games!</span></div>
-        <div class="muted" style="font-size:16px;font-weight:600;margin-top:14px">Bom Kentang Panas + Fake It Till You Make It</div>
+        <div class="muted" style="font-size:16px;font-weight:600;margin-top:14px">Bom Kentang Panas · Satu Dalam Sejuta · Fake It Till You Make It</div>
       </div>
       ${msg ? `<div class="panel center err">${esc(msg)}</div>` : ''}
       <div class="panel stack">
@@ -220,10 +226,11 @@
       };
     }
     if (st.final) return simple(`final-${st.me.rank}-${st.me.score}`, `<div class="fill-center center"><div class="big-msg">Lihat layar besar!</div><div class="mid-msg">Pengumuman juara lagi berlangsung… 🥁</div><div class="panel mid-msg">Peringkat kamu: <b>#${st.me.rank}</b><br>Skor: <b>${num(st.me.score)}</b></div></div>`);
-    const busy = (st.bomb && st.bomb.phase === 'live') || (st.fake && ['role', 'clue', 'discuss', 'vote', 'reveal', 'lastchance'].includes(st.fake.phase));
+    const busy = (st.bomb && st.bomb.phase === 'live') || (st.fake && ['role', 'clue', 'discuss', 'vote', 'reveal', 'lastchance'].includes(st.fake.phase)) || (st.sdj && ['jawab', 'banding', 'reveal'].includes(st.sdj.phase));
     if (st.overlay === 'leaderboard' && !busy) return simple(`lb-${st.me.rank}-${st.me.score}`, `<div class="fill-center center"><div class="big-msg">Cek leaderboard di layar besar!</div><div class="panel mid-msg">Kamu peringkat <b>#${st.me.rank}</b> dengan <b>${num(st.me.score)}</b> poin</div></div>`);
     if (st.activeGame === 'bomb' && st.bomb) return bombView(st);
     if (st.activeGame === 'fake' && st.fake) return fakeView(st);
+    if (st.activeGame === 'sdj' && st.sdj) return sdjView(st);
     const others = st.players.filter((p) => p.id !== st.me.id);
     return simple(
       `lobby-${others.map((p) => p.id + p.name + p.online).join()}`,
@@ -614,6 +621,177 @@
       if (bind) bind(inner);
     }
     box.querySelectorAll('[data-bind]').forEach((el) => { el.dataset.ends = f[el.dataset.bind]; });
+  }
+
+  // ---------- Satu Dalam Sejuta ----------
+  let sdjEditing = false; // "Ganti" pressed: show the input again over an accepted answer
+  let sdjRound = 0;
+
+  const depthTxt = (m) => `${num(m)} m`;
+
+  function sdjResultCard(r, double) {
+    if (r.ngambang) {
+      return `<div class="panel center sdj-res ngambang"><div class="emoji-xl">🛟</div><div class="big-msg">Ngambang 🫧</div>
+        <div class="mid-msg">${r.ditolak ? `"${esc(r.label)}" ditolak hakim` : r.label ? `"${esc(r.label)}" nggak dihitung` : 'Nggak ada jawaban'}</div><div class="big-msg muted">+0</div></div>`;
+    }
+    const tags = [
+      r.mutiara ? '<span class="chip sdj-tag pearl">🦪 SATU DALAM SEJUTA!</span>' : '',
+      r.collision ? '<span class="chip sdj-tag">💥 Tabrakan · 50%</span>' : '',
+      r.solo ? '<span class="chip sdj-tag ok">🏝️ Sendirian · +15</span>' : '',
+      r.sok ? '<span class="chip sdj-tag sok">🤓 SOK PINTER</span>' : '',
+      double ? '<span class="chip sdj-tag">×2 Penyelaman Ganda</span>' : '',
+    ].join('');
+    return `<div class="panel center sdj-res ${r.mutiara ? 'pearl' : ''}"><div class="mid-msg">Kamu menjawab <b class="hl">${esc(r.label)}</b></div>
+      <div class="emoji-xl">${r.emoji || '🤿'}</div><div class="big-msg">${esc(r.zona)}</div><div class="mid-msg muted">kedalaman ${depthTxt(r.depth)}</div>
+      <div class="big-msg pos-text">+${num(r.points)}</div><div class="row" style="justify-content:center">${tags}</div></div>`;
+  }
+
+  function sdjView(st) {
+    const d = st.sdj;
+    const me = st.me;
+    if (d.phase === 'idle' || !d.prompt) {
+      return simple(`sdj-idle-${d.round}-${d.phase}`, `<div class="fill-center center"><div class="emoji-xl">🐙</div><div class="big-msg">Satu Dalam Sejuta</div>
+        <div class="panel" style="text-align:left;font-size:17px;line-height:1.5">
+        Sebutkan sesuatu dari kategori, tapi cari yang <b>benar dan paling langka</b>.<br>
+        Makin langka, makin dalam kamu menyelam 🤿<br>
+        Jawaban sama dengan teman = <b>Tabrakan</b> (poin ½). Sendirian = <b>+15</b>.</div>
+        <div class="mid-msg muted">${d.phase === 'over' ? 'Game selesai!' : 'Tunggu host mulai prompt…'}</div></div>`);
+    }
+    if (d.phase === 'over' && !d.standings) return simple(`sdj-over-${me.score}`, `<div class="fill-center center"><div class="big-msg">Satu Dalam Sejuta selesai!</div><div class="panel mid-msg">Skor kamu: <b>${num(me.score)}</b><br>Peringkat #${me.rank}</div></div>`);
+    if (d.round !== sdjRound) { sdjRound = d.round; sdjEditing = false; }
+    return {
+      key: `sdj-${d.round}`,
+      build: (el) => {
+        el.innerHTML = `<div class="sdj-head center"><div class="muted" style="font-weight:700">Prompt ${d.round}/${d.totalPrompts}${d.double ? ' · ×2 PENYELAMAN GANDA' : ''}</div>
+          <div class="sdj-prompt">${esc(d.prompt)}</div></div><div id="sdjb" class="stack" style="flex:1"></div>`;
+        if (d.phase === 'jawab') { Sound.blub(); vibrate(120); }
+      },
+      after: () => renderSdjBody(st),
+    };
+  }
+
+  function renderSdjBody(st) {
+    const d = st.sdj;
+    const box = document.getElementById('sdjb');
+    if (!box) return;
+    const my = d.my || {};
+    let key;
+    let html;
+    let bind = null;
+    const inputHtml = (ph = 'Ketik jawabanmu…') => `<input id="sdjin" type="text" maxlength="40" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" placeholder="${ph}" style="font-size:24px;text-align:center" />
+      <button class="btn primary big" id="sdjsend">Kirim</button>`;
+    const triesTxt = () => `<div class="muted center">Sisa kesempatan ngetik: <b>${my.triesLeft}</b></div>`;
+    const bindInput = (el) => {
+      const inp = el.querySelector('#sdjin');
+      const btn = el.querySelector('#sdjsend');
+      if (!inp || !btn) return;
+      const send = () => {
+        const text = inp.value.trim();
+        if (!text) return;
+        btn.disabled = true;
+        socket.emit('sdj:submit', { text }, (res) => {
+          btn.disabled = false;
+          if (!res || !res.ok) { toast((res && res.error) || 'Gagal kirim'); Sound.buzz(); return; }
+          sdjEditing = false;
+          if (res.status === 'found') Sound.success();
+          else if (res.status === 'ambiguous') Sound.notify();
+          else Sound.buzz();
+          render();
+        });
+      };
+      btn.onclick = send;
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+      setTimeout(() => inp.focus(), 80);
+    };
+    const emitAck = (ev, data = {}, okSound) => socket.emit(ev, data, (res) => {
+      if (!res || !res.ok) { toast((res && res.error) || 'Gagal'); Sound.buzz(); } else if (okSound) okSound();
+    });
+
+    if (d.phase === 'jawab') {
+      const timer = `<div class="timer-big" data-bind="phaseEndsAt" data-ends="${d.phaseEndsAt}"></div>`;
+      if (my.locked && ['banding', 'sah', 'tolak'].includes(my.status)) {
+        key = `j-band-${my.status}`;
+        const verdict = my.status === 'sah' ? '<div class="mid-msg pos-text">✅ Sah kata hakim! Kedalaman dirahasiakan sampai reveal 🤫</div>'
+          : my.status === 'tolak' ? '<div class="mid-msg neg-text">❌ Ditolak hakim. Kamu ngambang 🫧</div>'
+          : '<div class="mid-msg muted">Host yang mutusin sah atau nggak. Siap-siap debat! 🗣️</div>';
+        html = `${timer}<div class="panel center stack"><div class="emoji-xl">⚖️</div><div class="big-msg">Banding diajukan</div><div class="mid-msg">"${esc(my.raw)}"</div>${verdict}</div>`;
+      } else if (my.locked) {
+        key = 'j-locked';
+        html = `${timer}<div class="panel center stack"><div class="emoji-xl">🤿</div><div class="big-msg">Terkunci!</div><div class="mid-msg">Kamu menjawab: <b class="hl">${esc(my.teks)}</b></div>
+          <div class="mid-msg muted">Kedalaman dirahasiakan sampai reveal 🤫</div></div>`;
+      } else if (my.status === 'found' && !sdjEditing) {
+        key = `j-found-${my.teks}-${my.triesLeft}`;
+        html = `${timer}<div class="panel center stack"><div class="mid-msg">✅ Diterima. Kamu menjawab:</div><div class="big-msg"><span class="hl">${esc(my.teks)}</span></div>
+          <div class="mid-msg muted">Kedalaman dirahasiakan sampai reveal 🤫</div>
+          <button class="btn primary big" id="sdjlock">🔒 Kunci Jawaban</button>
+          ${my.triesLeft > 0 ? `<button class="btn ghost" id="sdjedit">Bukan itu / ganti jawaban (sisa ${my.triesLeft})</button>` : '<div class="muted">Kesempatan ganti habis. Kunci aja!</div>'}</div>`;
+        bind = (el) => {
+          el.querySelector('#sdjlock').onclick = () => emitAck('sdj:lock', {}, () => { Sound.bubbles(); vibrate(80); });
+          const ed = el.querySelector('#sdjedit');
+          if (ed) ed.onclick = () => { sdjEditing = true; box.dataset.key = ''; render(); };
+        };
+      } else if (my.status === 'ambiguous' && !sdjEditing) {
+        key = `j-amb-${(my.options || []).join('|')}`;
+        html = `${timer}<div class="panel center stack"><div class="big-msg">Maksudmu…?</div><div class="muted">Kamu ngetik "${esc(my.raw)}"</div>
+          <div class="vote-list">${(my.options || []).map((o) => `<button class="btn" data-o="${esc(o)}">${esc(o)}</button>`).join('')}</div>
+          <button class="btn ghost" id="sdjedit">Bukan semua, ketik ulang</button></div>`;
+        bind = (el) => {
+          el.querySelectorAll('button[data-o]').forEach((b) => { b.onclick = () => emitAck('sdj:choose', { teks: b.dataset.o }, () => Sound.success()); });
+          el.querySelector('#sdjedit').onclick = () => { sdjEditing = true; box.dataset.key = ''; render(); };
+        };
+      } else if ((my.status === 'notfound' || my.status === 'perlu_banding') && !sdjEditing) {
+        key = `j-nf-${my.raw}-${my.triesLeft}-${my.status}`;
+        const msg = my.sering ? `🧐 "${esc(my.raw)}" perlu diputuskan host` : `🤔 "${esc(my.raw)}" nggak ada di daftar`;
+        html = `${timer}<div class="panel center stack"><div class="mid-msg">${msg}</div>
+          ${my.triesLeft > 0 ? `${triesTxt()}${inputHtml('Coba jawaban lain…')}` : '<div class="muted">Kesempatan ngetik habis.</div>'}
+          <button class="btn warn big" id="sdjappeal">⚖️ Ajukan Banding "${esc(my.raw)}"</button>
+          <div class="muted" style="font-size:14px">Banding = host yang mutusin sah atau nggak, di depan semua orang.</div></div>`;
+        bind = (el) => {
+          bindInput(el);
+          el.querySelector('#sdjappeal').onclick = () => emitAck('sdj:appeal', {}, () => Sound.notify());
+        };
+      } else {
+        key = `j-input-${my.triesLeft}`;
+        html = `${timer}<div class="panel stack">${inputHtml()}${my.triesLeft < d.maxTries ? triesTxt() : '<div class="muted center">Cari yang benar tapi langka! 🐙</div>'}
+          ${sdjEditing && my.status === 'found' ? `<button class="btn ghost" id="sdjback">Batal, tetap "${esc(my.teks)}"</button>` : ''}</div>`;
+        bind = (el) => {
+          bindInput(el);
+          const bk = el.querySelector('#sdjback');
+          if (bk) bk.onclick = () => { sdjEditing = false; box.dataset.key = ''; render(); };
+        };
+      }
+    } else if (d.phase === 'banding') {
+      const c = d.cur;
+      key = `b-${c ? c.id + c.raw : ''}-${my.status}`;
+      html = `<div class="panel center stack"><div class="emoji-xl">⚖️</div><div class="big-msg">Sidang Banding!</div>
+        ${c ? `<div class="mid-msg">${esc(c.name)}: <b class="hl">"${esc(c.raw)}"</b>?</div><div class="timer-big" data-ends="${c.endsAt}"></div>` : ''}
+        <div class="mid-msg muted">Sah atau nggak? Teriak ke host! 🗣️</div></div>`;
+    } else if (d.phase === 'reveal') {
+      key = `r-${d.myResult ? 'y' : 'n'}`;
+      html = d.myResult ? sdjResultCard(d.myResult, d.double) : `<div class="fill-center center"><div class="emoji-xl">🌊</div><div class="big-msg">Lihat layar besar!</div><div class="mid-msg">Penyelam turun satu per satu… 🫧</div></div>`;
+      if (d.myResult && box.dataset.key !== key) {
+        const r = d.myResult;
+        if (r.mutiara) Sound.sparkle(); else if (r.sok) Sound.tetot(); else if (r.ngambang) Sound.sad(); else Sound.bubbles();
+        vibrate(r.mutiara ? [100, 60, 100, 60, 300] : 100);
+      }
+    } else {
+      // hasil / over
+      const mine = (d.standings || []).findIndex((x) => x.id === st.me.id);
+      key = `h-${d.round}-${d.myResult ? d.myResult.points : 'x'}-${mine}-${st.me.score}`;
+      html = `${d.myResult ? sdjResultCard(d.myResult, d.double) : ''}
+        <div class="panel center mid-msg">${mine >= 0 ? `Klasemen kedalaman: <b>#${mine + 1}</b> · ${depthTxt(d.standings[mine].depth)}<br>` : ''}Skor total: <b>${num(st.me.score)}</b> (#${st.me.rank})</div>
+        <div class="mid-msg muted">${d.phase === 'over' ? 'Satu Dalam Sejuta selesai!' : d.round >= d.totalPrompts ? 'Itu prompt terakhir!' : 'Prompt berikutnya sebentar lagi…'}</div>`;
+    }
+
+    if (box.dataset.key !== key) {
+      box.dataset.key = key;
+      const inner = document.createElement('div');
+      inner.className = 'view';
+      inner.innerHTML = html;
+      box.replaceChildren(inner);
+      if (bind) bind(inner);
+    }
+    box.querySelectorAll('[data-bind]').forEach((el) => { el.dataset.ends = d[el.dataset.bind]; });
   }
 
   // Show the join form right away on first visit, instead of a blank page until the socket connects.

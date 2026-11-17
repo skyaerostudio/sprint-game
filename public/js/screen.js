@@ -48,18 +48,23 @@
     if (!st.session) m = 'none';
     else if (st.activeGame === 'bomb' && st.bomb) m = `bomb-${st.session.id}`;
     else if (st.activeGame === 'fake' && st.fake) m = `fake-${st.session.id}`;
-    else m = `lobby-${st.session.id}`;
+    else if (st.activeGame === 'sdj' && st.sdj) m = `sdj-${st.session.id}`;
+    else m = `lobby-${st.session.id}-${(st.session.order || []).map((g) => g.key).join()}`;
     if (m !== mode) {
       mode = m;
       stopBombLoops();
+      stopSdjReveal();
+      sv = null;
       $stage.innerHTML = '';
       if (m === 'none') buildNone();
       else if (m.startsWith('bomb')) buildBomb();
       else if (m.startsWith('fake')) buildFake();
+      else if (m.startsWith('sdj')) buildSdj();
       else buildLobby();
     }
     if (m.startsWith('bomb')) updateBomb();
     else if (m.startsWith('fake')) updateFake();
+    else if (m.startsWith('sdj')) updateSdj();
     else if (m.startsWith('lobby')) updateLobby();
 
     const showCorner = st.session && !m.startsWith('lobby');
@@ -77,7 +82,7 @@
   function buildLobby() {
     const s = st.session;
     $stage.innerHTML = `
-      <div class="scr-head"><div><div class="scr-title"><span class="theme-text">${esc(s.squad)}</span></div><div class="scr-sub">Sprint Games: Bom Kentang Panas + Fake It Till You Make It</div></div>
+      <div class="scr-head"><div><div class="scr-title"><span class="theme-text">${esc(s.squad)}</span></div><div class="scr-sub">Sprint Games: ${(s.order || []).map((g) => esc(g.name)).join(' → ')}</div></div>
       <div class="scr-sub" id="lcount"></div></div>
       <div class="lobby">
         <div class="qr-box"><div class="lead">Scan buat join!</div><img id="qr" alt="QR" /><div class="code">${esc(s.code)}</div><div class="url" id="jurl"></div></div>
@@ -523,6 +528,220 @@
     svg.innerHTML = out;
   }
 
+  // ---------- Satu Dalam Sejuta ----------
+  // Ocean rows: 0 = surface (Ngambang), 1–5 = tiers, 6 = Mutiara.
+  const SDJ_ROWS = 7;
+  let sv = null; // reveal animation state
+  let svTimer = null;
+  const ROMAN = { 2: 'berdua', 3: 'bertiga', 4: 'berempat', 5: 'berlima', 6: 'berenam', 7: 'bertujuh', 8: 'berdelapan', 9: 'bersembilan', 10: 'bersepuluh' };
+  const depthTxt = (m) => `${num(m)} m`;
+  const stepRow = (stp) => (stp.ngambang ? 0 : stp.mutiara ? 6 : stp.tier);
+
+  function buildSdj() {
+    $stage.innerHTML = `
+      <div class="scr-head"><div><div class="scr-title">Satu Dalam Sejuta 🐙 <span id="sbadges"></span></div><div class="scr-sub" id="ssub"></div></div>
+      <div class="fk-center"><div class="fk-big-timer" id="stimer"></div></div></div>
+      <div class="sdj-prompt-big" id="sprompt"></div>
+      <div class="sdj-stage" id="sstage"></div>`;
+  }
+
+  function stopSdjReveal() { clearInterval(svTimer); svTimer = null; }
+
+  function updateSdj() {
+    const d = st.sdj;
+    document.getElementById('sbadges').innerHTML = d.double ? '<span class="badge mega">×2 PENYELAMAN GANDA</span>' : '';
+    document.getElementById('ssub').textContent = d.round ? `Prompt ${d.round} dari ${d.totalPrompts}` : `${d.totalPrompts} prompt · siap-siap menyelam!`;
+    const $timer = document.getElementById('stimer');
+    const ends = d.phase === 'jawab' ? d.phaseEndsAt : d.phase === 'banding' && d.cur ? d.cur.endsAt : 0;
+    $timer.dataset.ends = ends || '';
+    if (!ends) $timer.textContent = '';
+    const $p = document.getElementById('sprompt');
+    const ptxt = d.prompt && d.phase !== 'idle' ? d.prompt : '';
+    if ($p.dataset.t !== ptxt) { $p.dataset.t = ptxt; $p.innerHTML = ptxt ? `<span>${esc(ptxt)}</span>` : ''; $p.classList.toggle('hidden', !ptxt); }
+
+    const $s = document.getElementById('sstage');
+    const withOcean = d.reveal && ['reveal', 'hasil', 'over'].includes(d.phase);
+    const mode = withOcean ? `ocean-${d.round}` : d.prompt && d.phase === 'jawab' ? `jawab-${d.round}` : d.phase === 'banding' ? `banding-${d.round}` : `idle-${d.phase}-${d.round}`;
+    if ($s.dataset.mode !== mode) {
+      $s.dataset.mode = mode;
+      $s.dataset.key = '';
+      stopSdjReveal();
+      sv = null;
+      if (withOcean) buildOcean($s, d);
+      else $s.innerHTML = '';
+    }
+    if (withOcean) return runSdjReveal(d);
+
+    let key;
+    let html;
+    if (d.phase === 'jawab') {
+      key = JSON.stringify([d.lockedIds, d.answeredIds, st.players.map((p) => p.id + p.online)]);
+      html = `<div class="sdj-divers">${st.players.map((p) => {
+        const locked = d.lockedIds.includes(p.id);
+        const typed = d.answeredIds.includes(p.id);
+        return `<div class="sdj-diver ${locked ? 'locked' : ''} ${p.online ? '' : 'off'}">${av(p)}<div class="nm">${esc(p.name)}</div>
+          <div class="st">${locked ? '🤿 Siap nyelam' : typed ? '✍️ Mikir…' : '…'}</div></div>`;
+      }).join('')}</div>
+      <div class="scr-sub center">Ketik di HP. Jawaban rahasia sampai reveal! <b>${d.lockedIds.length}/${st.players.length}</b> sudah kunci</div>`;
+    } else if (d.phase === 'banding') {
+      const c = d.cur;
+      key = JSON.stringify([c, d.banding]);
+      html = `<div class="sdj-court">
+        <div class="sdj-court-main">${c ? `<div class="lead">⚖️ Sidang Banding</div>${av(c)}<div class="who">${esc(c.name)} menjawab</div>
+          <div class="raw">“${esc(c.raw)}”?</div><div class="scr-sub">Sah atau nggak? Host yang mutusin. Silakan teriak! 🗣️</div>` : ''}</div>
+        <div class="side-panel"><h3>Antrean banding</h3>${d.banding.map((b) => `<div class="sdj-q ${b.status}">${b.avatar} ${esc(b.name)}: <b>${esc(b.raw)}</b>
+          <span class="chip ${b.status === 'sah' ? 'ok' : b.status === 'tolak' ? 'no' : ''}">${b.status === 'sah' ? (b.auto ? 'Sah (otomatis)' : 'Sah') : b.status === 'tolak' ? 'Ditolak' : 'Menunggu'}</span></div>`).join('')}</div></div>`;
+    } else {
+      key = `idle-${d.phase}-${st.leaderboard.map((e) => e.id + e.score).join()}`;
+      const z = d.zones;
+      html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:3vw;align-items:start">
+        <div class="side-panel" style="font-size:1.8vw;line-height:1.55">
+          ${d.phase === 'over' ? '<b>Satu Dalam Sejuta selesai!</b><br>' : ''}
+          Sebutkan sesuatu dari kategori, tapi cari yang <b>benar dan paling langka</b>.<br>
+          Makin langka, makin dalam kamu menyelam 🤿<br>
+          Jawaban kembar = <b>💥 Tabrakan</b> (½ poin) · Sendirian = <b>+${d.modifier.sendirian_bonus}</b>
+          <div class="sdj-zone-legend">${z.map((x) => `<span class="zl r${x.tier}">${x.emoji} ${esc(x.zona)} · ${x.poin}</span>`).join('')}</div></div>
+        <div class="side-panel"><h3>Skor</h3>${lbHtml(st.leaderboard, true)}</div></div>`;
+    }
+    if ($s.dataset.key !== key) { $s.dataset.key = key; $s.innerHTML = html; }
+  }
+
+  function buildOcean($s, d) {
+    const pids = d.pids || [];
+    const n = Math.max(1, pids.length);
+    const rows = [{ tier: 0, zona: 'Permukaan laut', emoji: '🌤️', depth: 0 }].concat(d.zones);
+    $s.innerHTML = `<div class="sdj-reveal">
+      <div class="ocean">
+        <div class="zones">${rows.map((z, i) => `<div class="zone r${i}"><span class="zn">${z.emoji} ${esc(z.zona)}</span>${i ? `<span class="zd">${depthTxt(z.depth)}</span>` : ''}</div>`).join('')}</div>
+        <div class="sea" id="sea">${pids.map((p, i) => `<div class="sdj-av pending" data-pid="${p.id}" style="--x:${((i + 0.5) / n) * 100}%;--row:0">${av(p)}<div class="tag"></div></div>`).join('')}</div>
+      </div>
+      <div class="side-panel sdj-side" id="sside"></div></div>`;
+  }
+
+  function runSdjReveal(d) {
+    const R = d.reveal;
+    if (!sv || sv.startedAt !== R.startedAt) sv = { startedAt: R.startedAt, shown: -1, first: true, sideKey: '' };
+    sv.d = d;
+    if (!svTimer && !R.done) svTimer = setInterval(stepSdj, 100);
+    if (R.done) stopSdjReveal();
+    stepSdj(true);
+  }
+
+  function stepSdj(force) {
+    if (!sv) return;
+    const d = sv.d;
+    const R = d.reveal;
+    const el = Clock.now() - R.startedAt;
+    const k = R.done ? R.steps.length : R.steps.filter((s) => s.at <= el).length;
+    const live = !sv.first && !R.done;
+    if (force === true || k !== sv.shown) {
+      const fresh = live && k > sv.shown && sv.shown >= 0;
+      if (sv.shown < 0 && live === false && !R.done && el < R.intro + 300) Sound.blub();
+      sv.shown = k;
+      placeDivers(d, k);
+      if (fresh) stepFx(R.steps[k - 1], d);
+    }
+    renderSdjSide(d, k, el);
+    sv.first = false;
+  }
+
+  function placeDivers(d, k) {
+    const shown = d.reveal.steps.slice(0, k);
+    const by = {};
+    shown.forEach((stp) => stp.pids.forEach((pid) => { by[pid] = stp; }));
+    document.querySelectorAll('.sdj-av').forEach((elm) => {
+      const stp = by[elm.dataset.pid];
+      elm.classList.toggle('pending', !stp);
+      elm.classList.toggle('float', !!(stp && stp.ngambang));
+      elm.classList.toggle('pearl', !!(stp && stp.mutiara));
+      elm.classList.toggle('sok', !!(stp && stp.sok));
+      elm.style.setProperty('--row', stp ? stepRow(stp) : 0);
+      const tag = elm.querySelector('.tag');
+      const txt = stp ? `<span class="t">${stp.ngambang ? '🛟 Ngambang' : esc(stp.label)}</span><b>+${num(stp.points)}</b>` : '';
+      if (tag.innerHTML !== txt) tag.innerHTML = txt;
+    });
+  }
+
+  function stepTags(stp) {
+    return [
+      stp.mutiara ? '<span class="sdj-stamp pearl">🦪 MUTIARA</span>' : '',
+      stp.collision ? `<span class="sdj-stamp hit">💥 Tabrakan! ×${stp.pids.length}</span>` : '',
+      stp.solo && !stp.ngambang ? '<span class="sdj-stamp solo">🏝️ Sendirian +15</span>' : '',
+      stp.sok ? '<span class="sdj-stamp sok">🤓 SOK PINTER</span>' : '',
+      stp.banding ? '<span class="sdj-stamp">⚖️ hasil banding</span>' : '',
+    ].join('');
+  }
+
+  function renderSdjSide(d, k, el) {
+    const $side = document.getElementById('sside');
+    if (!$side) return;
+    const R = d.reveal;
+    const P = (pid) => (d.pids || []).find((p) => p.id === pid) || st.players.find((p) => p.id === pid) || { name: '?', avatar: '❓' };
+    let key;
+    let html;
+    if (!R.done) {
+      if (k === 0) {
+        key = 'intro';
+        html = `<div class="sdj-callout"><div class="big">🌊</div><div class="lbl">Siap-siap menyelam…</div><div class="scr-sub">Dibuka dari yang paling dangkal</div></div>`;
+      } else {
+        const stp = R.steps[k - 1];
+        key = 'step' + k;
+        html = `<div class="sdj-callout ${stp.mutiara ? 'pearl' : ''}">
+          <div class="who">${stp.pids.map((pid) => `${P(pid).avatar} ${esc(P(pid).name)}`).join(' · ')}</div>
+          <div class="lbl">${stp.ngambang ? '🛟 Ngambang' : `“${esc(stp.label)}”`}</div>
+          <div class="zone-line">${stp.emoji || '🫧'} ${esc(stp.zona)}${stp.ngambang ? '' : ` · ${depthTxt(stp.depth)}`}</div>
+          <div class="row" style="justify-content:center">${stepTags(stp)}</div>
+          <div class="pts">+${num(stp.points)}</div></div>
+          ${R.steps.length > 1 ? `<div class="scr-sub center">${k}/${R.steps.length} terungkap</div>` : ''}`;
+      }
+    } else {
+      key = `done-${JSON.stringify(d.standings)}-${JSON.stringify(d.deeper)}-${d.satuOtak}`;
+      const n = (d.pids || []).length;
+      const dp = d.deeper || { rare: [] };
+      html = `${d.satuOtak ? `<div class="sdj-oneb">🧠 Satu otak ${ROMAN[n] || `ber-${n}`}!</div>` : ''}
+        <h3>Yang lebih dalam lagi…</h3>
+        <div class="sdj-deeper">${dp.rare.map((r) => `<div>${r.emoji} <b>${esc(r.teks)}</b> <span class="muted">${esc(r.zona)}</span></div>`).join('')}
+          ${dp.mutiara ? `<div class="pearl">${dp.mutiara.emoji} <b>${esc(dp.mutiara.teks)}</b> <span>Mutiara · ${depthTxt(dp.mutiara.depth)}</span></div>` : ''}</div>
+        <h3>Klasemen kedalaman</h3>
+        <div class="sdj-standings">${(d.standings || []).map((x, i) => `<div class="srow"><span class="rk">#${i + 1}</span>${x.avatar} <span class="nm">${esc(x.name)}</span>
+          <span class="dp">${depthTxt(x.depth)}</span><span class="lp">${x.last != null ? `+${num(x.last)}` : ''}</span><span class="tp">${num(x.points)}</span></div>`).join('')}</div>`;
+    }
+    if (sv.sideKey !== key) { sv.sideKey = key; $side.innerHTML = html; }
+  }
+
+  function stepFx(stp, d) {
+    if (!stp) return;
+    if (stp.mutiara) {
+      Sound.sparkle();
+      confetti(3500);
+      const ov = document.createElement('div');
+      ov.className = 'sdj-pearl-overlay';
+      const names = stp.pids.map((pid) => ((d.pids || []).find((p) => p.id === pid) || {}).name || '?');
+      ov.innerHTML = `<div class="pe">🦪</div><div class="cap">SATU DALAM SEJUTA!</div><div class="sub">${esc(names.join(' & '))}: “${esc(stp.label)}”</div>`;
+      $fx.appendChild(ov);
+      setTimeout(() => ov.remove(), 4200);
+    } else if (stp.sok) {
+      Sound.tetot();
+    } else if (stp.ngambang) {
+      Sound.sad();
+    } else {
+      Sound.bubbles(stp.tier >= 4 ? 10 : 6);
+      if (stp.collision) setTimeout(() => Sound.whoosh(), 250);
+    }
+  }
+
+  function sdjFx(fx) {
+    switch (fx.type) {
+      case 'sdj:start': Sound.notify(); setTimeout(() => Sound.blub(), 300); break;
+      case 'sdj:locked': Sound.blub(); break;
+      case 'sdj:banding': Sound.notify(); break;
+      case 'sdj:judged': fx.verdict === 'sah' ? Sound.success() : Sound.buzz(); break;
+      case 'sdj:phase': if (fx.phase === 'reveal') Sound.blub(); break;
+      case 'sdj:hasil': if (fx.satuOtak) Sound.tetot(); else Sound.ding(); break;
+      default: break;
+    }
+  }
+
   // ---------- FX ----------
   function onFx(fx) {
     if (!st || !st.session || fx.sid !== st.session.id) return;
@@ -539,6 +758,7 @@
       case 'score': Sound.ding(); break;
       default:
         if (fx.type.startsWith('bomb:')) bombFx(fx);
+        else if (fx.type.startsWith('sdj:')) sdjFx(fx);
     }
   }
 

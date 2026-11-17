@@ -23,8 +23,10 @@
       <button data-tab="sesi" class="on">Sesi</button>
       <button data-tab="pemain">Pemain & Skor</button>
       <button data-tab="bom">Bom</button>
+      <button data-tab="sdj">Satu Dalam Sejuta</button>
       <button data-tab="fake">Fake It</button>
       <button data-tab="kata">Bank Kata</button>
+      <button data-tab="bank">Bank Jawaban</button>
     </div>
 
     <section data-panel="sesi" class="stack">
@@ -34,6 +36,7 @@
         <div class="field"><label>Warna tema</label><div class="swatches" id="swatches"></div></div>
         <button class="btn primary" id="create">Bikin & tampilkan di layar besar</button>
       </div>
+      <div class="card"><h2>Urutan game sesi aktif</h2><div class="stack" id="order"></div></div>
       <div class="card"><h2>Semua sesi</h2><div class="stack" id="sessions"></div></div>
     </section>
 
@@ -73,6 +76,18 @@
       </div>
       <div class="card"><h2>Rahasia (cuma buat host)</h2><div id="fsecret"></div></div>
       <div class="card"><h2>Pengaturan</h2><div id="fsettings"></div></div>
+    </section>
+
+    <section data-panel="sdj" class="stack hidden">
+      <div class="card"><h2>Satu Dalam Sejuta 🐙</h2><div id="sstatus"></div></div>
+      <div class="card"><h2>Sidang Banding</h2><div class="stack" id="scourt"></div></div>
+      <div class="card"><h2>Jawaban pemain (cuma buat host)</h2><div id="sanswers" style="overflow-x:auto"></div></div>
+      <div class="card"><h2>Pengaturan</h2><div id="ssettings"></div></div>
+    </section>
+
+    <section data-panel="bank" class="stack hidden">
+      <div class="card"><h2>Bank Jawaban Satu Dalam Sejuta</h2><div class="stack" id="bkhead"></div></div>
+      <div class="card"><div class="stack" id="bkbody"></div></div>
     </section>
 
     <section data-panel="kata" class="stack hidden">

@@ -1,14 +1,15 @@
 {
   "name": "sprint-event-games",
   "version": "1.0.0",
-  "description": "Sprint Event Games: Bom Kentang Panas + Fake It Till You Make It",
+  "description": "Sprint Event Games: Bom Kentang Panas + Satu Dalam Sejuta + Fake It Till You Make It",
   "main": "server.js",
   "private": true,
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
     "simulate": "node scripts/simulate.js",
-    "test": "node scripts/simulate.js --auto --players 7 --bomb-rounds 2 --fake-rounds 2"
+    "test": "node --test test/*.test.js && node scripts/simulate.js --auto --players 7 --bomb-rounds 2 --sdj-rounds 2 --fake-rounds 2",
+    "test:unit": "node --test test/*.test.js"
   },
   "engines": {
     "node": ">=18"
